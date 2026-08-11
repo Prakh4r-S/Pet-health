@@ -1,0 +1,188 @@
+// Pet Healthcare — Milestone 1 schema
+// Covers: accounts, multi-species pet profiles, weight history,
+// vaccinations with due dates, allergies, conditions.
+// Deliberately excludes: consultations, documents, community, insurance.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+// ---------------------------------------------------------------
+// Accounts
+// ---------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pets Pet[]
+
+  // Auth.js additionally requires Account, Session and VerificationToken
+  // models. Copy those verbatim from the Auth.js Prisma adapter docs
+  // rather than writing them yourself — they must match exactly.
+}
+
+// ---------------------------------------------------------------
+// Reference data (seeded, not user-editable)
+// ---------------------------------------------------------------
+
+model Species {
+  id        String  @id @default(cuid())
+  name      String  @unique // "Dog", "Cat", "Rabbit"
+  slug      String  @unique
+  careNotes String? // markdown shown on the profile page
+
+  breeds       Breed[]
+  vaccineTypes VaccineType[]
+  pets         Pet[]
+}
+
+model Breed {
+  id                   String   @id @default(cuid())
+  speciesId            String
+  name                 String
+  slug                 String
+  careNotes            String?
+  adultWeightMinKg     Decimal? @db.Decimal(6, 2)
+  adultWeightMaxKg     Decimal? @db.Decimal(6, 2)
+  typicalLifespanYears Int?
+
+  species Species @relation(fields: [speciesId], references: [id])
+  pets    Pet[]
+
+  @@unique([speciesId, slug])
+  @@index([speciesId])
+}
+
+model VaccineType {
+  id                    String  @id @default(cuid())
+  speciesId             String
+  name                  String // "Rabies", "DHPP", "FVRCP"
+  slug                  String
+  isCore                Boolean @default(false)
+  defaultIntervalMonths Int? // null = single dose, no recurrence
+
+  species      Species       @relation(fields: [speciesId], references: [id])
+  vaccinations Vaccination[]
+
+  @@unique([speciesId, slug])
+}
+
+// ---------------------------------------------------------------
+// Pets
+// ---------------------------------------------------------------
+
+enum Sex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+model Pet {
+  id                String    @id @default(cuid())
+  ownerId           String
+  speciesId         String
+  breedId           String? // null when unknown or mixed
+  breedFreeText     String? // escape hatch: "Lab x Indie mix"
+  name              String
+  sex               Sex       @default(UNKNOWN)
+  birthDate         DateTime? @db.Date
+  birthDateIsApprox Boolean   @default(false) // rescues rarely have exact dates
+  neutered          Boolean?
+  microchipNumber   String?
+  photoUrl          String?
+  archivedAt        DateTime? // soft delete: records outlive the pet
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  species    Species            @relation(fields: [speciesId], references: [id])
+  breed      Breed?             @relation(fields: [breedId], references: [id])
+  weights    WeightLog[]
+  vaccinations Vaccination[]
+  allergies  Allergy[]
+  conditions MedicalCondition[]
+
+  @@index([ownerId, archivedAt])
+}
+
+// ---------------------------------------------------------------
+// Health records
+// ---------------------------------------------------------------
+
+model WeightLog {
+  id         String   @id @default(cuid())
+  petId      String
+  weightKg   Decimal  @db.Decimal(6, 3)
+  measuredAt DateTime @db.Date
+  note       String?
+  createdAt  DateTime @default(now())
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@unique([petId, measuredAt]) // one canonical weight per day
+  @@index([petId, measuredAt])
+}
+
+model Vaccination {
+  id             String    @id @default(cuid())
+  petId          String
+  vaccineTypeId  String
+  administeredOn DateTime  @db.Date
+  nextDueOn      DateTime? @db.Date // computed on write from defaultIntervalMonths
+  administeredBy String? // clinic or vet name, free text for now
+  batchNumber    String?
+  note           String?
+  createdAt      DateTime  @default(now())
+
+  pet         Pet         @relation(fields: [petId], references: [id], onDelete: Cascade)
+  vaccineType VaccineType @relation(fields: [vaccineTypeId], references: [id])
+
+  @@index([petId, administeredOn])
+  @@index([nextDueOn]) // drives the "what's due" query
+}
+
+enum Severity {
+  MILD
+  MODERATE
+  SEVERE
+  UNKNOWN
+}
+
+model Allergy {
+  id          String    @id @default(cuid())
+  petId       String
+  allergen    String
+  reaction    String?
+  severity    Severity  @default(UNKNOWN)
+  diagnosedOn DateTime? @db.Date
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, active])
+}
+
+model MedicalCondition {
+  id          String    @id @default(cuid())
+  petId       String
+  name        String
+  notes       String?
+  diagnosedOn DateTime? @db.Date
+  resolvedOn  DateTime? @db.Date // null = ongoing
+  createdAt   DateTime  @default(now())
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, resolvedOn])
+}
