@@ -53,7 +53,9 @@ export default async function PetsPage() {
         <ul className="grid gap-3">
           {pets.map((pet) => (
             <li key={pet.id} className="rounded-md border border-gray-200 p-4">
-              <p className="font-medium">{pet.name}</p>
+              <Link href={`/pets/${pet.id}`} className="font-medium hover:underline">
+                {pet.name}
+              </Link>
               <p className="text-sm text-gray-600">
                 {pet.species.name}
                 {" · "}
