@@ -1,17 +1,34 @@
-import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { auth } from "@/../auth";
 
-// TEMPORARY. Returns a single fixed user so the app can be built and
-// tested before authentication exists. Replace the body of this
-// function with a real session lookup when Auth.js goes in — every
-// caller already treats it as "who is logged in", so nothing else
-// should need to change.
-
-const DEMO_EMAIL = "demo@pethealth.local";
-
+/**
+ * The signed-in user, or a redirect to the sign-in page.
+ *
+ * This replaces the hardcoded demo account. Because every page and server
+ * action already routed through this one function, swapping the body was
+ * the whole migration — the ownership checks written against the demo
+ * user became real checks with no changes at the call sites.
+ */
 export async function getCurrentUser() {
-  return prisma.user.upsert({
-    where: { email: DEMO_EMAIL },
-    update: {},
-    create: { email: DEMO_EMAIL, name: "Demo User" },
-  });
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
+
+  return session.user as {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+}
+
+/**
+ * Same, but returns null instead of redirecting — for pages that render
+ * differently when signed out rather than being closed entirely.
+ */
+export async function getOptionalUser() {
+  const session = await auth();
+  return session?.user?.id ? session.user : null;
 }
