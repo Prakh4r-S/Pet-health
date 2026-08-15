@@ -61,7 +61,7 @@ export default function WeightChart({
             unit="kg"
             width={60}
           />
-          <Tooltip formatter={(v: number) => [`${v} kg`, "Weight"]} />
+          <Tooltip formatter={(v) => [`${v} kg`, "Weight"] as [string, string]} />
           <Line
             type="monotone"
             dataKey="weightKg"
