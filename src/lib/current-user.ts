@@ -1,34 +1,43 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/../auth";
+import { prisma } from "@/lib/prisma";
 
-/**
- * The signed-in user, or a redirect to the sign-in page.
- *
- * This replaces the hardcoded demo account. Because every page and server
- * action already routed through this one function, swapping the body was
- * the whole migration — the ownership checks written against the demo
- * user became real checks with no changes at the call sites.
- */
+/** The signed-in user, or a redirect to sign-in. */
 export async function getCurrentUser() {
   const session = await auth();
-
-  if (!session?.user?.id) {
-    redirect("/signin");
-  }
-
+  if (!session?.user?.id) redirect("/signin");
   return session.user as {
     id: string;
+    role: "OWNER" | "VET";
     name?: string | null;
     email?: string | null;
     image?: string | null;
   };
 }
 
-/**
- * Same, but returns null instead of redirecting — for pages that render
- * differently when signed out rather than being closed entirely.
- */
+/** Returns null instead of redirecting, for pages that render both ways. */
 export async function getOptionalUser() {
   const session = await auth();
   return session?.user?.id ? session.user : null;
+}
+
+/**
+ * The signed-in user's vet profile, or a redirect to onboarding.
+ *
+ * The profile is read from the database rather than trusted from the
+ * session. With database sessions the two rarely diverge, but a role
+ * change should take effect on the next request rather than whenever
+ * the session happens to expire — and an authorisation check is the
+ * wrong place to economise on a query.
+ */
+export async function requireVetProfile() {
+  const user = await getCurrentUser();
+
+  const profile = await prisma.vetProfile.findUnique({
+    where: { userId: user.id },
+    include: { specialisations: true },
+  });
+
+  if (!profile) redirect("/vet/onboarding");
+  return { user, profile };
 }

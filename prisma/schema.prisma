@@ -12,6 +12,12 @@ datasource db {
   
 }
 
+
+enum Role {
+  OWNER
+  VET
+}
+
 // ---------------------------------------------------------------
 // Accounts
 // ---------------------------------------------------------------
@@ -28,6 +34,8 @@ model User {
   pets     Pet[]
   accounts Account[]
   sessions Session[]
+  role       Role        @default(OWNER)
+  vetProfile VetProfile?
 }
 
 // ---------------------------------------------------------------
@@ -223,4 +231,75 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+
+model VetProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  licenceNumber  String
+  bio            String?
+  yearsExperience Int?
+  clinicName     String?
+  city           String?
+  // IANA name, e.g. "Asia/Kolkata". Availability below is expressed in
+  // this zone; without it, a window stored as 09:00–17:00 is meaningless
+  // to anyone in a different timezone.
+  timezone       String    @default("Asia/Kolkata")
+  slotMinutes    Int       @default(30)
+  // Set when an admin approves the vet. Nullable because an unverified
+  // vet exists but should not be bookable — a real product would check
+  // the licence number against a veterinary council register here.
+  verifiedAt     DateTime?
+  acceptingNewPatients Boolean @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialisations Specialisation[]
+  availability    VetAvailability[]
+  timeOff         VetTimeOff[]
+
+  @@index([verifiedAt, acceptingNewPatients])
+}
+
+model Specialisation {
+  id   String @id @default(cuid())
+  name String @unique // "Dermatology", "Orthopaedics", "Exotics"
+  slug String @unique
+
+  vets VetProfile[]
+}
+/// A recurring weekly window during which the vet takes appointments.
+///
+/// Times are stored as minutes from midnight rather than as DateTime or
+/// Time columns. A recurring window has no date, so a DateTime would
+/// carry a meaningless day component, and Prisma's Time handling varies
+/// by driver. An integer is unambiguous, trivially comparable, and easy
+/// to slice into slots of slotMinutes each.
+model VetAvailability {
+  id           String @id @default(cuid())
+  vetProfileId String
+  dayOfWeek    Int // 0 = Sunday ... 6 = Saturday
+  startMinute  Int // 540 = 09:00
+  endMinute    Int // 1020 = 17:00
+
+  vetProfile VetProfile @relation(fields: [vetProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vetProfileId, dayOfWeek])
+}
+
+/// A one-off absence that overrides the recurring pattern — holiday,
+/// conference, sick day. Stored as absolute instants because these are
+/// real points in time, not weekly abstractions.
+model VetTimeOff {
+  id           String   @id @default(cuid())
+  vetProfileId String
+  startsAt     DateTime
+  endsAt       DateTime
+  reason       String?
+
+  vetProfile VetProfile @relation(fields: [vetProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vetProfileId, startsAt])
 }

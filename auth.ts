@@ -17,7 +17,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // The default session object omits the user id, which every ownership
     // check in this app depends on. Copy it across.
     session({ session, user }) {
-      if (session.user) session.user.id = user.id;
+      if (session.user) {
+        session.user.id = user.id;
+        session.user.role = user.role;
+      }
       return session;
     },
   },
