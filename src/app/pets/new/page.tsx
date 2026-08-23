@@ -2,6 +2,8 @@ import Link from "next/link";
 import PetForm from "@/components/pet-form";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewPetPage() {
   const species = await prisma.species.findMany({
     orderBy: { name: "asc" },
