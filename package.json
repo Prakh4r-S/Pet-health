@@ -12,6 +12,9 @@
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@prisma/engines": "^7.9.1",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.4.2",
     "next": "16.3.0",
     "next-auth": "^5.0.0-beta.32",
@@ -33,6 +36,10 @@
     "typescript": "^5"
   },
   "allowScripts": {
-    "recharts@3.10.1": true
+    "recharts@3.10.1": true,
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true,
+    "prisma@7.9.1": true,
+    "@prisma/engines@7.9.1": true
   }
 }

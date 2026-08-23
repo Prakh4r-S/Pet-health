@@ -36,6 +36,7 @@ model User {
   sessions Session[]
   role       Role        @default(OWNER)
   vetProfile VetProfile?
+  appointments Appointment[]
 }
 
 // ---------------------------------------------------------------
@@ -110,6 +111,7 @@ model Pet {
   archivedAt        DateTime? // soft delete: records outlive the pet
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  
 
   owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   species    Species            @relation(fields: [speciesId], references: [id])
@@ -118,6 +120,7 @@ model Pet {
   vaccinations Vaccination[]
   allergies  Allergy[]
   conditions MedicalCondition[]
+  appointments Appointment[]
 
   @@index([ownerId, archivedAt])
 }
@@ -259,7 +262,7 @@ model VetProfile {
   specialisations Specialisation[]
   availability    VetAvailability[]
   timeOff         VetTimeOff[]
-
+  appointments Appointment[]
   @@index([verifiedAt, acceptingNewPatients])
 }
 
@@ -303,3 +306,38 @@ model VetTimeOff {
 
   @@index([vetProfileId, startsAt])
 }
+
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Appointment {
+  id           String            @id @default(cuid())
+  petId        String
+  ownerId      String
+  vetProfileId String
+  startsAt     DateTime
+  endsAt       DateTime
+  status       AppointmentStatus @default(SCHEDULED)
+  reason       String?
+  // Set when the owner books "any available vet" rather than choosing
+  // one — worth knowing when looking at how the feature gets used.
+  wasInstantMatch Boolean        @default(false)
+  cancelledAt  DateTime?
+  cancelledBy  String? // user id, so "who cancelled" survives
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  pet        Pet        @relation(fields: [petId], references: [id], onDelete: Cascade)
+  owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  vetProfile VetProfile @relation(fields: [vetProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vetProfileId, startsAt])
+  @@index([ownerId, startsAt])
+  @@index([petId, startsAt])
+}
+
