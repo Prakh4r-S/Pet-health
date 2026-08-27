@@ -7,7 +7,7 @@ export type Slot = {
 };
 
 /** Nothing bookable inside this window — vets need warning. */
-const LEAD_TIME_MINUTES = 60;
+const LEAD_TIME_MINUTES = 0;
 /** How far ahead slots are offered. */
 const HORIZON_DAYS = 14;
 

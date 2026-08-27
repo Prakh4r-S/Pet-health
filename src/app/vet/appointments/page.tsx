@@ -62,6 +62,12 @@ export default async function VetAppointmentsPage() {
                 {a.reason && <p className="mt-2 text-sm text-gray-700">{a.reason}</p>}
               </div>
               <div className="flex flex-col items-end gap-2">
+              <Link
+                  href={`/appointments/${a.id}/room`}
+                  className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+                >
+                  Join call
+                </Link>
                 <Link
                   href={`/pets/${a.petId}`}
                   className="text-sm text-gray-600 hover:underline"

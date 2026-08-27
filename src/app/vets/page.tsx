@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
+import { findVetsAvailableNow } from "@/lib/slots";
+import InstantMatch from "@/components/instant-match";
 
 const card = "rounded-lg border border-gray-200 p-5 hover:border-gray-400";
 
@@ -9,10 +11,10 @@ export default async function VetsPage({
 }: {
   searchParams: Promise<{ specialisation?: string }>;
 }) {
-  await getCurrentUser();
+  const user = await getCurrentUser();
   const { specialisation } = await searchParams;
 
-  const [vets, specialisations] = await Promise.all([
+  const [vets, specialisations, pets, availableNow] = await Promise.all([
     prisma.vetProfile.findMany({
       where: {
         verifiedAt: { not: null },
@@ -26,6 +28,12 @@ export default async function VetsPage({
       orderBy: { yearsExperience: "desc" },
     }),
     prisma.specialisation.findMany({ orderBy: { name: "asc" } }),
+    prisma.pet.findMany({
+      where: { ownerId: user.id, archivedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    findVetsAvailableNow(specialisation),
   ]);
 
   return (
@@ -36,6 +44,12 @@ export default async function VetsPage({
           Your appointments
         </Link>
       </div>
+
+      <InstantMatch
+        pets={pets}
+        specialisationSlug={specialisation}
+        availableCount={availableNow.length}
+      />
 
       <div className="mb-8 flex flex-wrap gap-2">
         <Link

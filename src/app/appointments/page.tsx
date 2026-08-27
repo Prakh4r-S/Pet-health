@@ -63,12 +63,20 @@ export default async function AppointmentsPage() {
                 </p>
                 {a.reason && <p className="mt-1 text-sm text-gray-500">{a.reason}</p>}
               </div>
-              <form action={cancelAppointment}>
-                <input type="hidden" name="id" value={a.id} />
-                <button type="submit" className="text-sm text-red-600 hover:underline">
-                  Cancel
-                </button>
-              </form>
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                <Link
+                  href={`/appointments/${a.id}/room`}
+                  className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+                >
+                  Join call
+                </Link>
+                <form action={cancelAppointment}>
+                  <input type="hidden" name="id" value={a.id} />
+                  <button type="submit" className="text-sm text-red-600 hover:underline">
+                    Cancel
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>
