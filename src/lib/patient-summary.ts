@@ -30,6 +30,12 @@ export type PatientSummary = {
     lastGivenOn: string | null;
     nextDueOn: string | null;
   }[];
+  documents: {
+    id: string;
+    kind: string;
+    title: string;
+    createdAt: string;
+  }[];
 };
 
 function monthsSince(birthDate: Date | null): number | null {
@@ -51,6 +57,7 @@ export async function getPatientSummary(petId: string): Promise<PatientSummary> 
       weights: { orderBy: { measuredAt: "asc" } },
       allergies: { where: { active: true } },
       conditions: { orderBy: { diagnosedOn: "desc" } },
+      documents: { orderBy: { createdAt: "desc" }, take: 20 },
     },
   });
 
@@ -87,6 +94,12 @@ export async function getPatientSummary(petId: string): Promise<PatientSummary> 
       status: s.status,
       lastGivenOn: s.lastGivenOn?.toISOString().slice(0, 10) ?? null,
       nextDueOn: s.nextDueOn?.toISOString().slice(0, 10) ?? null,
+    })),
+    documents: pet.documents.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      title: d.title,
+      createdAt: d.createdAt.toISOString().slice(0, 10),
     })),
   };
 }

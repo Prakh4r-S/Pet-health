@@ -6,6 +6,7 @@ import { getPetAccess } from "@/lib/pet-access";
 import { getVaccineStandings, type VaccineStatus } from "@/lib/vaccine-status";
 import { logVaccination, logWeight } from "./actions";
 import WeightChart from "@/components/weight-chart";
+import DocumentsSection from "@/components/documents-section";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 const button = "rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700";
@@ -44,6 +45,10 @@ export default async function PetDetailPage({
       weights: { orderBy: { measuredAt: "asc" } },
       allergies: { where: { active: true } },
       conditions: { orderBy: { diagnosedOn: "desc" } },
+      documents: {
+        orderBy: { createdAt: "desc" },
+        include: { uploadedBy: { select: { name: true } } },
+      },
     },
   });
 
@@ -238,6 +243,23 @@ export default async function PetDetailPage({
           </form>
         )}
       </section>
+      <div className="mt-6">
+        <DocumentsSection
+          petId={pet.id}
+          canUpload
+          documents={pet.documents.map((d) => ({
+            id: d.id,
+            kind: d.kind,
+            title: d.title,
+            note: d.note,
+            contentType: d.contentType,
+            sizeBytes: d.sizeBytes,
+            createdAt: d.createdAt.toISOString().slice(0, 10),
+            uploadedByName: d.uploadedBy.name,
+            canDelete: access.role === "OWNER" || d.uploadedById === user.id,
+          }))}
+        />
+      </div>
     </main>
   );
 }

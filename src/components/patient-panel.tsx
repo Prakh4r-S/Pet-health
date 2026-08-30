@@ -16,6 +16,15 @@ const statusLabels: Record<string, string> = {
   UP_TO_DATE: "Up to date",
 };
 
+const kindLabels: Record<string, string> = {
+  LAB_REPORT: "Lab report",
+  PRESCRIPTION: "Prescription",
+  IMAGING: "Imaging",
+  VACCINATION_CERT: "Vaccination cert",
+  CONSULTATION_SNAPSHOT: "Snapshot",
+  OTHER: "Other",
+};
+
 function describeAge(months: number | null, approx: boolean) {
   if (months === null) return "Age unknown";
   const years = Math.floor(months / 12);
@@ -81,6 +90,33 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
             <p className="mt-1 text-sm text-amber-900">
               {attention.map((v) => v.name).join(", ")}
             </p>
+          </section>
+        )}
+
+        {patient.documents.length > 0 && (
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Documents
+            </h3>
+            <ul className="mt-1.5 space-y-1">
+              {patient.documents.map((d) => (
+                <li key={d.id}>
+                  {/* Opens in a new tab so the call keeps running — a
+                      same-tab navigation would unmount the room. */}
+                  <a
+                    href={`/api/documents/${d.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm hover:underline"
+                  >
+                    {d.title}
+                  </a>
+                  <span className="block text-xs text-gray-500">
+                    {kindLabels[d.kind] ?? d.kind} · {d.createdAt}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

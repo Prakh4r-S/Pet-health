@@ -69,10 +69,10 @@ export default async function VetAppointmentsPage() {
                   Join call
                 </Link>
                 <Link
-                  href={`/pets/${a.petId}`}
+                  href={`/appointments/${a.id}/review`}
                   className="text-sm text-gray-600 hover:underline"
                 >
-                  Records
+                  Review
                 </Link>
                 <form action={cancelAppointment}>
                   <input type="hidden" name="id" value={a.id} />

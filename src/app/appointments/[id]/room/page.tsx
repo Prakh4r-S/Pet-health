@@ -98,8 +98,10 @@ export default async function ConsultationRoomPage({
       <ConsultationWorkspace
         token={token}
         serverUrl={serverUrl}
-        onLeaveHref={access.isVet ? "/vet/appointments" : "/appointments"}
+        onLeaveHref={access.isVet ? `/appointments/${id}/review` : "/appointments"}
         patient={patient}
+        appointmentId={id}
+        isVet={access.isVet}
       />
     </main>
   );
