@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getPatientSummary } from "@/lib/patient-summary";
 import PatientPanel from "@/components/patient-panel";
+import NoteEditor from "@/components/note-editor";
+import TranscriptPanel, { type Proposal } from "@/components/transcript-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,17 @@ export default async function ConsultationReviewPage({
     include: {
       pet: { select: { id: true, name: true } },
       owner: { select: { name: true } },
+      recording: true,
       documents: { orderBy: { createdAt: "desc" } },
+      note: {
+        include: {
+          prescriptions: { orderBy: { createdAt: "asc" } },
+          amendments: {
+            orderBy: { createdAt: "asc" },
+            include: { author: { select: { name: true } } },
+          },
+        },
+      },
     },
   });
 
@@ -68,7 +80,7 @@ export default async function ConsultationReviewPage({
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div>
+        <div className="grid gap-6">
           <section className="rounded-lg border border-gray-200 p-5">
             <h2 className="mb-4 font-medium">From this consultation</h2>
             {appointment.documents.length === 0 ? (
@@ -101,10 +113,51 @@ export default async function ConsultationReviewPage({
               </ul>
             )}
           </section>
-
-          <p className="mt-4 text-sm text-gray-500">
-            Consultation notes and prescriptions will appear here next.
-          </p>
+          <TranscriptPanel
+            appointmentId={appointment.id}
+            noteLocked={appointment.note?.status === "FINALISED"}
+            recording={
+              appointment.recording
+                ? {
+                    status: appointment.recording.status,
+                    durationSeconds: appointment.recording.durationSeconds,
+                    transcript: appointment.recording.transcript,
+                    extraction: (appointment.recording.extraction as Proposal | null) ?? null,
+                    error: appointment.recording.error,
+                  }
+                : null
+            }
+          />
+          <NoteEditor
+            appointmentId={appointment.id}
+            note={{
+              status: appointment.note?.status ?? "DRAFT",
+              scratch: appointment.note?.scratch ?? null,
+              presentingComplaint: appointment.note?.presentingComplaint ?? null,
+              examination: appointment.note?.examination ?? null,
+              assessment: appointment.note?.assessment ?? null,
+              plan: appointment.note?.plan ?? null,
+              followUpOn:
+                appointment.note?.followUpOn?.toISOString().slice(0, 10) ?? null,
+              finalisedAt: appointment.note?.finalisedAt?.toISOString() ?? null,
+              prescriptions:
+                appointment.note?.prescriptions.map((p) => ({
+                  id: p.id,
+                  drug: p.drug,
+                  dose: p.dose,
+                  frequency: p.frequency,
+                  durationDays: p.durationDays,
+                  instructions: p.instructions,
+                })) ?? [],
+              amendments:
+                appointment.note?.amendments.map((a) => ({
+                  id: a.id,
+                  body: a.body,
+                  createdAt: a.createdAt.toISOString().slice(0, 16).replace("T", " "),
+                  authorName: a.author.name,
+                })) ?? [],
+            }}
+          />
         </div>
 
         <aside className="h-fit overflow-hidden rounded-lg border border-gray-200">

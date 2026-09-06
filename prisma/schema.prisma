@@ -40,6 +40,7 @@ model User {
   appointments Appointment[]
 
   uploadedDocuments Document[] @relation("UploadedDocuments")
+  amendments NoteAmendment[]
 
 }
 
@@ -127,6 +128,7 @@ model Pet {
   appointments Appointment[]
 
   documents Document[]
+  prescriptions Prescription[]
 
   @@index([ownerId, archivedAt])
 }
@@ -270,6 +272,8 @@ model VetProfile {
   timeOff         VetTimeOff[]
   appointments Appointment[]
   @@index([verifiedAt, acceptingNewPatients])
+
+  notes ConsultationNote[]
 }
 
 model Specialisation {
@@ -347,6 +351,9 @@ model Appointment {
   @@index([petId, startsAt])
 
   documents Document[]
+  note ConsultationNote?
+  recording ConsultationRecording?
+  
 }
 
 
@@ -386,3 +393,103 @@ model Document {
   @@index([appointmentId])
 }
 
+enum NoteStatus {
+  DRAFT
+  FINALISED
+}
+
+model ConsultationNote {
+  id            String     @id @default(cuid())
+  appointmentId String     @unique
+  vetProfileId  String
+  status        NoteStatus @default(DRAFT)
+
+  scratch String? // typed during the call
+
+  presentingComplaint String?
+  examination         String?
+  assessment          String?
+  plan                String?
+  followUpOn          DateTime? @db.Date
+
+  // Once set, the structured fields above are frozen. Corrections go in
+  // as amendments rather than edits, because a clinical record that can
+  // be silently rewritten is not a record — you cannot tell afterwards
+  // what the vet actually knew and said at the time.
+  finalisedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment   Appointment     @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  vetProfile    VetProfile      @relation(fields: [vetProfileId], references: [id])
+  amendments    NoteAmendment[]
+  prescriptions Prescription[]
+
+  @@index([vetProfileId, createdAt])
+}
+
+model NoteAmendment {
+  id        String   @id @default(cuid())
+  noteId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  note   ConsultationNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  author User             @relation(fields: [authorId], references: [id])
+
+  @@index([noteId, createdAt])
+}
+model Prescription {
+  id           String  @id @default(cuid())
+  noteId       String
+  petId        String
+  drug         String
+  dose         String // "5 mg", "0.5 ml/kg" — units vary too much to model
+  frequency    String // "twice daily", "every 8 hours"
+  durationDays Int?
+  instructions String?
+  createdAt    DateTime @default(now())
+
+  note ConsultationNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  pet  Pet              @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId, createdAt])
+}
+
+
+enum RecordingStatus {
+  UPLOADED
+  TRANSCRIBING
+  TRANSCRIBED
+  FAILED
+}
+
+model ConsultationRecording {
+  id            String          @id @default(cuid())
+  appointmentId String          @unique
+  pathname      String          @unique
+  contentType   String
+  sizeBytes     Int
+  durationSeconds Int?
+  status        RecordingStatus @default(UPLOADED)
+
+  /// Plain text, for display and for feeding the extraction step.
+  transcript String?
+  /// Segments with timings and speaker labels, kept so a proposed field
+  /// can be traced back to the moment it came from.
+  segments   Json?
+  /// The structured proposal: presenting complaint, examination,
+  /// assessment, plan, medications. Stored as returned, unmodified.
+  extraction Json?
+
+  error        String?
+  transcribedAt DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}

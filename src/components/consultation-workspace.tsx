@@ -7,6 +7,8 @@ import "@livekit/components-styles";
 import PatientPanel from "@/components/patient-panel";
 import SnapshotTool from "@/components/snapshot-tool";
 import type { PatientSummary } from "@/lib/patient-summary";
+import NotesPanel from "@/components/notes-panel";
+import CallRecorder from "@/components/call-recorder";
 
 /**
  * Holds the call, the records panel and the snapshot tool in one mounted
@@ -58,8 +60,10 @@ export default function ConsultationWorkspace({
             </div>
 
             {isVet && patient && (
-              <div className="mt-3">
+              <div className="mt-3 grid gap-3">
                 <SnapshotTool appointmentId={appointmentId} petId={patient.id} />
+                <CallRecorder appointmentId={appointmentId} />
+                <NotesPanel appointmentId={appointmentId} />
               </div>
             )}
           </div>
