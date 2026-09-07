@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
-import SignOutButton from "@/components/sign-out-button";
+
 
 function describeAge(birthDate: Date | null, approx: boolean) {
   if (!birthDate) return "Age unknown";
@@ -38,16 +38,13 @@ export default async function PetsPage() {
     <main className="mx-auto max-w-2xl px-6 py-10">
      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Your pets</h1>
-        <div className="flex items-center gap-4">
-          <SignOutButton />
           <Link
             href="/pets/new"
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
+            className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
           >
             Add pet
           </Link>
         </div>
-      </div>
 
       {pets.length === 0 ? (
         <p className="rounded-md border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">

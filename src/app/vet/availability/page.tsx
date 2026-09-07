@@ -3,7 +3,7 @@ import { requireVetProfile } from "@/lib/current-user";
 import { addAvailability, addTimeOff, removeAvailability } from "../actions";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const button = "rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700";
+const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 const card = "rounded-lg border border-gray-200 p-5";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

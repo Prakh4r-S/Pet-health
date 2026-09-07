@@ -15,7 +15,7 @@ function Blocked({ title, body }: { title: string; body: string }) {
       <p className="mt-2 text-sm text-gray-600">{body}</p>
       <Link
         href="/appointments"
-        className="mt-6 inline-block rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
+        className="mt-6 inline-block rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
       >
         Back to appointments
       </Link>

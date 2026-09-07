@@ -86,7 +86,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               <div
                 className={
                   m.role === "user"
-                    ? "ml-auto max-w-[80%] rounded-lg bg-gray-900 px-3 py-2 text-sm text-white"
+                    ? "ml-auto max-w-[80%] rounded-lg bg-pine-900 px-3 py-2 text-sm text-white"
                     : "max-w-[85%] rounded-lg bg-gray-100 px-3 py-2 text-sm"
                 }
               >
@@ -97,7 +97,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
                    question needs a vet, offer the vet. */
                 <Link
                   href="/vets"
-                  className="mt-2 inline-block rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+                  className="mt-2 inline-block rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
                 >
                   Book a consultation
                 </Link>
@@ -130,7 +130,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
           type="button"
           onClick={() => void send(input)}
           disabled={!hasPets || busy || !input.trim()}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:bg-gray-300"
+          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
         >
           Ask
         </button>

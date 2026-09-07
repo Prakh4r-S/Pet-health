@@ -8,7 +8,7 @@ import {
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 const label = "mb-1 block text-xs font-medium text-gray-600";
-const button = "rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700";
+const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 
 export type NoteData = {
   status: "DRAFT" | "FINALISED";

@@ -41,7 +41,7 @@ export default async function AppointmentsPage() {
         <h1 className="text-2xl font-semibold">Appointments</h1>
         <Link
           href="/vets"
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
+          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
         >
           Book
         </Link>
@@ -66,7 +66,7 @@ export default async function AppointmentsPage() {
                             <div className="flex shrink-0 flex-col items-end gap-2">
                 <Link
                   href={`/appointments/${a.id}/room`}
-                  className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700"
+                  className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
                 >
                   Join call
                 </Link>

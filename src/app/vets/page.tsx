@@ -55,7 +55,7 @@ export default async function VetsPage({
         <Link
           href="/vets"
           className={`rounded-full px-3 py-1 text-sm ${
-            !specialisation ? "bg-gray-900 text-white" : "bg-gray-100 hover:bg-gray-200"
+            !specialisation ? "bg-pine-900 text-white" : "bg-gray-100 hover:bg-gray-200"
           }`}
         >
           All
@@ -66,7 +66,7 @@ export default async function VetsPage({
             href={`/vets?specialisation=${s.slug}`}
             className={`rounded-full px-3 py-1 text-sm ${
               specialisation === s.slug
-                ? "bg-gray-900 text-white"
+                ? "bg-pine-900 text-white"
                 : "bg-gray-100 hover:bg-gray-200"
             }`}
           >

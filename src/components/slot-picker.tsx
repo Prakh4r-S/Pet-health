@@ -60,7 +60,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
                   onClick={() => setSelected(iso)}
                   className={`rounded-md px-3 py-1.5 text-sm ${
                     selected === iso
-                      ? "bg-gray-900 text-white"
+                      ? "bg-pine-900 text-white"
                       : "bg-gray-100 hover:bg-gray-200"
                   }`}
                 >
@@ -94,7 +94,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
       <button
         type="submit"
         disabled={!selected}
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:bg-gray-300"
+        className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
       >
         {selected
           ? `Book ${new Date(selected).toLocaleString(undefined, {

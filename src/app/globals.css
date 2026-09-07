@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Deep pine rather than clinical blue: this is a product about
+     animals and care, and medical blue is what every health app
+     reaches for. */
+  --color-pine-50: #f1f6f3;
+  --color-pine-100: #dceae2;
+  --color-pine-500: #2c6b58;
+  --color-pine-700: #1b4d3f;
+  --color-pine-900: #143d33;
+
+  --color-bark: #22201d;
+  --color-bark-soft: #5b5751;
+  --color-mist: #eef1ee;
+
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: white;
+  color: var(--color-bark);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Keyboard focus stays visible everywhere. The default outline is
+   removed often enough by resets that it is worth restating. */
+:focus-visible {
+  outline: 2px solid var(--color-pine-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

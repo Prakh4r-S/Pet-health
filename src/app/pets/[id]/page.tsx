@@ -9,7 +9,7 @@ import WeightChart from "@/components/weight-chart";
 import DocumentsSection from "@/components/documents-section";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const button = "rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700";
+const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 const card = "rounded-lg border border-gray-200 p-5";
 
 const statusStyles: Record<VaccineStatus, { label: string; className: string }> = {

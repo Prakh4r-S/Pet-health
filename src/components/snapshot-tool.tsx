@@ -241,7 +241,7 @@ function SnapshotControls({
         type="button"
         disabled={saving}
         onClick={() => onSave(note)}
-        className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700 disabled:bg-gray-300"
+        className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
       >
         {saving ? "Saving..." : "Save to record"}
       </button>
