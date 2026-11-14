@@ -7,6 +7,9 @@ import {
   JOIN_WINDOW_BEFORE_MINUTES,
 } from "@/lib/consultation-room";
 import LocalTime from "@/components/local-time";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 import { cancelAppointment } from "@/app/appointments/actions";
 
 const PAST_LIMIT = 50;
@@ -120,12 +123,19 @@ export default async function VetAppointmentsPage() {
                     Review
                   </Link>
                   {!started && (
-                    <form action={cancelAppointment}>
+                    <ActionForm
+                      action={cancelAppointment}
+                      className="text-right"
+                      confirm="Cancel this appointment? The slot will be released."
+                    >
                       <input type="hidden" name="id" value={a.id} />
-                      <button type="submit" className="text-sm text-red-600 hover:underline">
+                      <SubmitButton
+                        pendingLabel="Cancelling..."
+                        className="text-sm text-red-600 hover:underline"
+                      >
                         Cancel
-                      </button>
-                    </form>
+                      </SubmitButton>
+                    </ActionForm>
                   )}
                 </div>
               </li>

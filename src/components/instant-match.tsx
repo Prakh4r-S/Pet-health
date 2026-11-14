@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { bookInstantMatch } from "@/app/appointments/actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 
 type Pet = { id: string; name: string };
 
@@ -49,7 +52,7 @@ export default function InstantMatch({
       </div>
 
       {open && (
-        <form action={bookInstantMatch} className="mt-4 grid gap-3">
+        <ActionForm action={bookInstantMatch} className="mt-4 grid gap-3">
           {specialisationSlug && (
             <input type="hidden" name="specialisationSlug" value={specialisationSlug} />
           )}
@@ -80,14 +83,14 @@ export default function InstantMatch({
                 placeholder="Limping since this morning"
               />
             </div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Matching..."
               className="rounded-md bg-green-700 px-4 py-2 text-sm text-white hover:bg-green-800"
             >
               Match me
-            </button>
+            </SubmitButton>
           </div>
-        </form>
+        </ActionForm>
       )}
     </div>
   );

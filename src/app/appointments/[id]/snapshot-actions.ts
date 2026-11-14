@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { uploadDocument, MAX_UPLOAD_BYTES } from "@/lib/blob";
+import { fail, ok, type ActionState } from "@/lib/action-result";
 
 /**
  * Saves an annotated frame from a consultation into the pet's record.
@@ -17,7 +18,7 @@ export async function saveSnapshot(params: {
   petId: string;
   dataUrl: string;
   note: string | null;
-}) {
+}): Promise<ActionState> {
   const user = await getCurrentUser();
 
   const appointment = await prisma.appointment.findFirst({
@@ -33,10 +34,10 @@ export async function saveSnapshot(params: {
   if (!appointment) throw new Error("Not your consultation.");
 
   const match = /^data:image\/jpeg;base64,(.+)$/.exec(params.dataUrl);
-  if (!match) throw new Error("Unexpected image format.");
+  if (!match) return fail("Unexpected image format.");
 
   const bytes = Buffer.from(match[1], "base64");
-  if (bytes.byteLength > MAX_UPLOAD_BYTES) throw new Error("Image too large.");
+  if (bytes.byteLength > MAX_UPLOAD_BYTES) return fail("Image too large.");
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 
@@ -62,6 +63,7 @@ export async function saveSnapshot(params: {
   });
 
   revalidatePath(`/pets/${appointment.petId}`);
+  return ok;
 }
 
 /** Snapshots taken during one consultation, for the in-call strip. */

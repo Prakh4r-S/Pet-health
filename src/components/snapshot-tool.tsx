@@ -137,17 +137,21 @@ export default function SnapshotTool({
     if (!canvas) return;
     setSaving(true);
     try {
-      await saveSnapshot({
+      const result = await saveSnapshot({
         appointmentId,
         petId,
         dataUrl: canvas.toDataURL("image/jpeg", 0.85),
         note: note.trim() || null,
       });
+      if (result.error) {
+        setMessage(result.error);
+        return;
+      }
       setCaptured(null);
       setStrokes([]);
       setMessage("Saved to the patient's record.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save.");
+    } catch {
+      setMessage("Could not save the snapshot. Try again.");
     } finally {
       setSaving(false);
     }

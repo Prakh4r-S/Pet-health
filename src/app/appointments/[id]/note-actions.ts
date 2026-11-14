@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
+import { fail, ok, type ActionState } from "@/lib/action-result";
 
 /**
  * Confirms the signed-in user is the vet on this appointment, and
@@ -11,6 +12,9 @@ import { getCurrentUser } from "@/lib/current-user";
  * The note is created lazily rather than at booking time — most
  * appointments never get one, and an empty draft for every future
  * booking is clutter.
+ *
+ * Throws for anyone else: these actions are reachable only from the
+ * vet's own review page, so a mismatch is not a form-filling mistake.
  */
 async function getOwnNote(appointmentId: string) {
   const user = await getCurrentUser();
@@ -41,15 +45,22 @@ export async function saveScratch(appointmentId: string, scratch: string) {
   });
 }
 
-export async function saveNoteDraft(formData: FormData) {
+export async function saveNoteDraft(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const { note } = await getOwnNote(appointmentId);
 
   if (note.status === "FINALISED") {
-    throw new Error("This note is finalised. Add an amendment instead.");
+    return fail("This note is finalised. Add an amendment instead.");
   }
 
   const followUpRaw = String(formData.get("followUpOn") ?? "");
+  const followUpOn = followUpRaw ? new Date(followUpRaw) : null;
+  if (followUpOn && Number.isNaN(followUpOn.valueOf())) {
+    return fail("Enter a valid follow-up date.");
+  }
 
   await prisma.consultationNote.update({
     where: { id: note.id },
@@ -58,23 +69,27 @@ export async function saveNoteDraft(formData: FormData) {
       examination: String(formData.get("examination") ?? "").trim() || null,
       assessment: String(formData.get("assessment") ?? "").trim() || null,
       plan: String(formData.get("plan") ?? "").trim() || null,
-      followUpOn: followUpRaw ? new Date(followUpRaw) : null,
+      followUpOn,
     },
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }
 
-export async function finaliseNote(formData: FormData) {
+export async function finaliseNote(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const { note, appointment } = await getOwnNote(appointmentId);
 
-  if (note.status === "FINALISED") return;
+  if (note.status === "FINALISED") return ok;
 
   // A note with nothing in it is not a record. Requiring an assessment
   // is a low bar, but it stops empty notes being signed off by accident.
   if (!note.assessment?.trim()) {
-    throw new Error("Add an assessment before finalising.");
+    return fail("Add an assessment and save the draft before finalising.");
   }
 
   await prisma.$transaction([
@@ -93,17 +108,21 @@ export async function finaliseNote(formData: FormData) {
 
   revalidatePath(`/appointments/${appointmentId}/review`);
   revalidatePath("/vet/appointments");
+  return ok;
 }
 
-export async function addAmendment(formData: FormData) {
+export async function addAmendment(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const body = String(formData.get("body") ?? "").trim();
 
   const { user, note } = await getOwnNote(appointmentId);
 
-  if (!body) throw new Error("Write something first.");
+  if (!body) return fail("Write something first.");
   if (note.status !== "FINALISED") {
-    throw new Error("Edit the draft directly — amendments are for finalised notes.");
+    return fail("Edit the draft directly — amendments are for finalised notes.");
   }
 
   await prisma.noteAmendment.create({
@@ -111,14 +130,18 @@ export async function addAmendment(formData: FormData) {
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }
 
-export async function addPrescription(formData: FormData) {
+export async function addPrescription(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const { note, appointment } = await getOwnNote(appointmentId);
 
   if (note.status === "FINALISED") {
-    throw new Error("This note is finalised. Add an amendment instead.");
+    return fail("This note is finalised. Add an amendment instead.");
   }
 
   const drug = String(formData.get("drug") ?? "").trim();
@@ -127,12 +150,12 @@ export async function addPrescription(formData: FormData) {
   const durationRaw = String(formData.get("durationDays") ?? "");
 
   if (!drug || !dose || !frequency) {
-    throw new Error("Drug, dose and frequency are all required.");
+    return fail("Drug, dose and frequency are all required.");
   }
 
   const durationDays = durationRaw ? Number(durationRaw) : null;
   if (durationDays !== null && (!Number.isInteger(durationDays) || durationDays < 1)) {
-    throw new Error("Duration must be a whole number of days.");
+    return fail("Duration must be a whole number of days.");
   }
 
   await prisma.prescription.create({
@@ -148,15 +171,19 @@ export async function addPrescription(formData: FormData) {
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }
 
-export async function removePrescription(formData: FormData) {
+export async function removePrescription(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const id = String(formData.get("id") ?? "");
   const { note } = await getOwnNote(appointmentId);
 
   if (note.status === "FINALISED") {
-    throw new Error("This note is finalised and cannot be changed.");
+    return fail("This note is finalised and cannot be changed.");
   }
 
   // Scoped to this note, so a guessed id from another consultation
@@ -164,4 +191,5 @@ export async function removePrescription(formData: FormData) {
   await prisma.prescription.deleteMany({ where: { id, noteId: note.id } });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }

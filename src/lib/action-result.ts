@@ -1,11 +1,31 @@
 /**
- * What an action called from a client component returns.
+ * What a server action hands back to the form that called it.
  *
- * A thrown error's message is replaced with a generic one in production,
- * so anything the user is meant to read has to come back as a value.
+ * Anything the user is meant to read comes back as a value. A thrown
+ * error's message is replaced with a generic one in production, so
+ * "someone just booked that slot" would arrive as "an error occurred".
+ * Throwing is kept for what really is exceptional: the caller is not
+ * allowed to do this at all, or something broke.
  */
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionState = { error?: string; success?: boolean };
 
-export function fail(error: string): ActionResult {
-  return { ok: false, error };
+export const initialActionState: ActionState = {};
+
+export function fail(error: string): ActionState {
+  return { error };
+}
+
+export const ok: ActionState = { success: true };
+
+/** A server action in the shape useActionState expects. */
+export type FormAction = (
+  previous: ActionState,
+  formData: FormData,
+) => Promise<ActionState>;
+
+/** Prisma's unique-violation error, which several actions turn into a message. */
+export function isUniqueViolation(error: unknown) {
+  return (
+    typeof error === "object" && error !== null && "code" in error && error.code === "P2002"
+  );
 }

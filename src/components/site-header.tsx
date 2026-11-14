@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/../auth";
 import { prisma } from "@/lib/prisma";
+import SubmitButton from "@/components/submit-button";
 
 /**
  * Navigation, which differs by role.
@@ -55,9 +56,12 @@ export default async function SiteHeader() {
                 await signOut({ redirectTo: "/" });
               }}
             >
-              <button type="submit" className="text-bark-soft hover:text-bark">
+              <SubmitButton
+                pendingLabel="Signing out..."
+                className="text-bark-soft hover:text-bark"
+              >
                 Sign out
-              </button>
+              </SubmitButton>
             </form>
           </nav>
         ) : (

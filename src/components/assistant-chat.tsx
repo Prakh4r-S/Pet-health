@@ -30,7 +30,12 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
     setError(null);
 
     try {
-      const reply = await askAssistant(question, history);
+      const result = await askAssistant(question, history);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      const { reply } = result;
       setMessages((m) => [
         ...m,
         {
@@ -39,8 +44,10 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
           suggestsConsultation: reply.suggestsConsultation,
         },
       ]);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } catch {
+      // Only reached if the request itself failed; anything the assistant
+      // had to say about why comes back as a value above.
+      setError("Something went wrong. Check your connection and try again.");
     } finally {
       setBusy(false);
       requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: "smooth" }));
@@ -87,7 +94,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
                 className={
                   m.role === "user"
                     ? "ml-auto max-w-[80%] rounded-lg bg-pine-900 px-3 py-2 text-sm text-white"
-                    : "max-w-[85%] rounded-lg bg-gray-100 px-3 py-2 text-sm"
+                    : "max-w-[85%] whitespace-pre-wrap rounded-lg bg-gray-100 px-3 py-2 text-sm"
                 }
               >
                 {m.content}

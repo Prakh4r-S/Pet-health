@@ -139,7 +139,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
       });
 
       const result = await registerRecording({ appointmentId, pathname, durationSeconds });
-      if (!result.ok) {
+      if (result.error) {
         setState("error");
         setMessage(result.error);
         return;

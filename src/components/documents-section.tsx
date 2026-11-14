@@ -1,5 +1,8 @@
 import { deletePetDocument } from "@/app/pets/[id]/document-actions";
 import DocumentUploadForm from "@/components/document-upload-form";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 
 const KIND_LABELS: Record<string, string> = {
   LAB_REPORT: "Lab report",
@@ -67,12 +70,18 @@ export default function DocumentsSection({
                 {d.note && <p className="mt-1 text-xs text-gray-600">{d.note}</p>}
               </div>
               {d.canDelete && (
-                <form action={deletePetDocument}>
+                <ActionForm
+                  action={deletePetDocument}
+                  className="shrink-0 text-right"
+                  confirm="Remove this document? This cannot be undone.">
                   <input type="hidden" name="id" value={d.id} />
-                  <button type="submit" className="text-xs text-red-600 hover:underline">
+                  <SubmitButton
+                    pendingLabel="Removing..."
+                    className="text-xs text-red-600 hover:underline"
+                  >
                     Remove
-                  </button>
-                </form>
+                  </SubmitButton>
+                </ActionForm>
               )}
             </li>
           ))}

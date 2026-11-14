@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireVetProfile } from "@/lib/current-user";
-import { addAvailability, addTimeOff, removeAvailability } from "../actions";
+import { addAvailability, addTimeOff, removeAvailability, removeTimeOff } from "../actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 const card = "rounded-lg border border-gray-200 p-5";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -59,16 +60,20 @@ export default async function AvailabilityPage() {
                   <span className="text-sm text-gray-400">Not available</span>
                 ) : (
                   windows.map((w) => (
-                    <form key={w.id} action={removeAvailability}>
+                    <ActionForm
+                      key={w.id}
+                      action={removeAvailability}
+                      confirm={`Remove ${name} ${hhmm(w.startMinute)}–${hhmm(w.endMinute)}? Appointments already booked in it are kept.`}
+                    >
                       <input type="hidden" name="id" value={w.id} />
-                      <button
-                        type="submit"
+                      <SubmitButton
                         title="Remove"
+                        pendingLabel="Removing..."
                         className="rounded-full bg-gray-100 px-3 py-1 text-sm hover:bg-red-100 hover:line-through"
                       >
                         {hhmm(w.startMinute)}–{hhmm(w.endMinute)}
-                      </button>
-                    </form>
+                      </SubmitButton>
+                    </ActionForm>
                   ))
                 )}
               </div>
@@ -76,7 +81,11 @@ export default async function AvailabilityPage() {
           ))}
         </ul>
 
-        <form action={addAvailability} className="mt-5 flex flex-wrap items-end gap-3">
+        <ActionForm
+          action={addAvailability}
+          resetOnSuccess={false}
+          className="mt-5 flex flex-wrap items-end gap-3"
+        >
           <div className="w-40">
             <label className="mb-1 block text-xs text-gray-600" htmlFor="dayOfWeek">Day</label>
             <select id="dayOfWeek" name="dayOfWeek" className={field} defaultValue="1">
@@ -93,8 +102,8 @@ export default async function AvailabilityPage() {
             <label className="mb-1 block text-xs text-gray-600" htmlFor="endTime">To</label>
             <input id="endTime" name="endTime" type="time" defaultValue="17:00" className={field} required />
           </div>
-          <button type="submit" className={button}>Add hours</button>
-        </form>
+          <SubmitButton pendingLabel="Adding...">Add hours</SubmitButton>
+        </ActionForm>
         <p className="mt-2 text-xs text-gray-500">
           Click an existing window to remove it. Overlapping windows are merged.
         </p>
@@ -108,15 +117,30 @@ export default async function AvailabilityPage() {
         ) : (
           <ul className="divide-y divide-gray-100">
             {timeOff.map((t) => (
-              <li key={t.id} className="py-3 text-sm">
-                {t.startsAt.toISOString().slice(0, 10)} to {t.endsAt.toISOString().slice(0, 10)}
-                {t.reason && <span className="text-gray-500"> · {t.reason}</span>}
+              <li key={t.id} className="flex items-start justify-between gap-4 py-3 text-sm">
+                <span>
+                  {t.startsAt.toISOString().slice(0, 10)} to {t.endsAt.toISOString().slice(0, 10)}
+                  {t.reason && <span className="text-gray-500"> · {t.reason}</span>}
+                </span>
+                <ActionForm
+                  action={removeTimeOff}
+                  className="shrink-0 text-right"
+                  confirm="Remove this time off? Those dates will become bookable again."
+                >
+                  <input type="hidden" name="id" value={t.id} />
+                  <SubmitButton
+                    pendingLabel="Removing..."
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Remove
+                  </SubmitButton>
+                </ActionForm>
               </li>
             ))}
           </ul>
         )}
 
-        <form action={addTimeOff} className="mt-5 flex flex-wrap items-end gap-3">
+        <ActionForm action={addTimeOff} className="mt-5 flex flex-wrap items-end gap-3">
           <div className="w-44">
             <label className="mb-1 block text-xs text-gray-600" htmlFor="startsAt">From</label>
             <input id="startsAt" name="startsAt" type="date" className={field} required />
@@ -129,8 +153,8 @@ export default async function AvailabilityPage() {
             <label className="mb-1 block text-xs text-gray-600" htmlFor="reason">Reason (optional)</label>
             <input id="reason" name="reason" className={field} />
           </div>
-          <button type="submit" className={button}>Add</button>
-        </form>
+          <SubmitButton pendingLabel="Adding...">Add</SubmitButton>
+        </ActionForm>
       </section>
     </main>
   );

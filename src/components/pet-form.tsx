@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { createPet } from "@/app/pets/actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 
 type Breed = { id: string; name: string };
 type Species = { id: string; name: string; breeds: Breed[] };
@@ -14,7 +17,7 @@ export default function PetForm({ species }: { species: Species[] }) {
   const breeds = species.find((s) => s.id === speciesId)?.breeds ?? [];
 
   return (
-    <form action={createPet} className="grid gap-5">
+    <ActionForm action={createPet} className="grid gap-5">
       <div>
         <label className={label} htmlFor="name">Name</label>
         <input id="name" name="name" className={field} required autoFocus />
@@ -72,12 +75,7 @@ export default function PetForm({ species }: { species: Species[] }) {
         </label>
       </div>
 
-      <button
-        type="submit"
-        className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
-      >
-        Add pet
-      </button>
-    </form>
+      <SubmitButton pendingLabel="Adding...">Add pet</SubmitButton>
+    </ActionForm>
   );
 }
