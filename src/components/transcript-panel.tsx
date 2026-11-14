@@ -31,6 +31,8 @@ export type Proposal = {
 
 export type RecordingData = {
   status: "UPLOADED" | "TRANSCRIBING" | "TRANSCRIBED" | "FAILED";
+  /** In TRANSCRIBING for long enough that no request can still be behind it. */
+  stalled: boolean;
   durationSeconds: number | null;
   transcript: string | null;
   extraction: Proposal | null;
@@ -119,11 +121,25 @@ export default function TranscriptPanel({
         </ActionForm>
       )}
 
-      {recording.status === "TRANSCRIBING" && (
+      {recording.status === "TRANSCRIBING" && !recording.stalled && (
         <p className="text-sm text-gray-600">
-          Transcribing. This takes roughly as long as the recording. Reload the
-          page to check.
+          Transcribing. This can take up to a minute. Reload the page to check.
         </p>
+      )}
+
+      {recording.status === "TRANSCRIBING" && recording.stalled && (
+        <div>
+          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            This transcription seems to have stalled — it started a while ago
+            and never finished. The recording itself is safe.
+          </p>
+          <ActionForm action={requestTranscription}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <SubmitButton pendingLabel="Transcribing..." className={smallButton}>
+              Try again
+            </SubmitButton>
+          </ActionForm>
+        </div>
       )}
 
       {recording.status === "FAILED" && (

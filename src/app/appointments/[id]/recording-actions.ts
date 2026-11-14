@@ -12,6 +12,23 @@ import {
 } from "@/lib/blob";
 import { baseContentType, recordingPrefix } from "@/lib/upload-rules";
 import { fail, ok, type ActionState } from "@/lib/action-result";
+import { isTranscriptionStale, transcriptionTimeoutMs } from "@/lib/transcription";
+
+/** Turns whatever went wrong into something a vet can act on. */
+function describeFailure(error: unknown) {
+  if (error instanceof Error) {
+    // AbortSignal.timeout() rejects with TimeoutError; an abort from
+    // elsewhere with AbortError. Either way nothing came back in time.
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      return "The transcription service took too long to respond. It may have been waking up, or the recording may be too long for it. Try again.";
+    }
+    if (error.name === "TypeError") {
+      return "The transcription service could not be reached. Try again in a moment.";
+    }
+    return error.message;
+  }
+  return "Unknown error";
+}
 
 async function requireOwnAppointment(appointmentId: string) {
   const user = await getCurrentUser();
@@ -125,6 +142,14 @@ export async function requestTranscription(
   });
   if (!recording) return fail("There is no recording for this consultation.");
 
+  // One request at a time. A second click while the first is running
+  // would transcribe the same audio twice; but a recording that has sat
+  // in this state for minutes has no request behind it any more, and has
+  // to be retryable or it is stuck for good.
+  if (recording.status === "TRANSCRIBING" && !isTranscriptionStale(recording)) {
+    return fail("This recording is already being transcribed. Give it a minute.");
+  }
+
   const serviceUrl = process.env.TRANSCRIPTION_SERVICE_URL;
   const serviceKey = process.env.TRANSCRIPTION_SERVICE_KEY;
   if (!serviceUrl || !serviceKey) {
@@ -136,6 +161,11 @@ export async function requestTranscription(
     data: { status: "TRANSCRIBING", error: null },
   });
 
+  // Results are written only if this is still the recording that was
+  // sent: a re-record during transcription replaces the audio, and a
+  // transcript of the old take must not be attached to the new one.
+  const sameTake = { id: recording.id, pathname: recording.pathname };
+
   try {
     const audioUrl = await getSignedReadUrl(recording.pathname);
 
@@ -146,10 +176,13 @@ export async function requestTranscription(
         Authorization: `Bearer ${serviceKey}`,
       },
       body: JSON.stringify({ audio_url: audioUrl }),
+      // Without this the request waits as long as the service takes, and
+      // if the function is killed first the status is never updated.
+      signal: AbortSignal.timeout(transcriptionTimeoutMs()),
     });
 
     if (!response.ok) {
-      throw new Error(`Transcription service returned ${response.status}`);
+      throw new Error(`The transcription service returned an error (${response.status}).`);
     }
 
     const result = (await response.json()) as {
@@ -158,8 +191,8 @@ export async function requestTranscription(
       extraction: unknown;
     };
 
-    await prisma.consultationRecording.update({
-      where: { id: recording.id },
+    await prisma.consultationRecording.updateMany({
+      where: sameTake,
       data: {
         status: "TRANSCRIBED",
         transcript: result.transcript,
@@ -171,12 +204,9 @@ export async function requestTranscription(
   } catch (error) {
     // The failure is recorded rather than swallowed, so the vet sees why
     // no draft appeared instead of an empty panel.
-    await prisma.consultationRecording.update({
-      where: { id: recording.id },
-      data: {
-        status: "FAILED",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
+    await prisma.consultationRecording.updateMany({
+      where: sameTake,
+      data: { status: "FAILED", error: describeFailure(error) },
     });
   }
 

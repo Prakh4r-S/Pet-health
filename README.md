@@ -244,6 +244,7 @@ LIVEKIT_API_SECRET
 BLOB_READ_WRITE_TOKEN
 TRANSCRIPTION_SERVICE_URL
 TRANSCRIPTION_SERVICE_KEY
+TRANSCRIPTION_TIMEOUT_MS      # optional — how long to wait for a transcript, default 55000
 ```
 
 The transcription service runs separately — see its repository.

@@ -3,12 +3,19 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getPatientSummary } from "@/lib/patient-summary";
+import { isTranscriptionStale } from "@/lib/transcription";
 import PatientPanel from "@/components/patient-panel";
 import NoteEditor from "@/components/note-editor";
 import LocalTime from "@/components/local-time";
 import TranscriptPanel, { type Proposal } from "@/components/transcript-panel";
 
 export const dynamic = "force-dynamic";
+
+// Transcription is requested from this page and waits on another service.
+// This is the ceiling for that wait; the request itself gives up slightly
+// sooner (see lib/transcription) so that a slow service ends as a
+// recorded failure rather than a killed function.
+export const maxDuration = 60;
 
 const kindLabels: Record<string, string> = {
   LAB_REPORT: "Lab report",
@@ -113,6 +120,7 @@ export default async function ConsultationReviewPage({
               appointment.recording
                 ? {
                     status: appointment.recording.status,
+                    stalled: isTranscriptionStale(appointment.recording),
                     durationSeconds: appointment.recording.durationSeconds,
                     transcript: appointment.recording.transcript,
                     extraction: (appointment.recording.extraction as Proposal | null) ?? null,

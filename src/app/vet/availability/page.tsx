@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/prisma";
 import { requireVetProfile } from "@/lib/current-user";
 import { addAvailability, addTimeOff, removeAvailability, removeTimeOff } from "../actions";
@@ -13,6 +14,17 @@ function hhmm(minutes: number) {
   const h = String(Math.floor(minutes / 60)).padStart(2, "0");
   const m = String(minutes % 60).padStart(2, "0");
   return `${h}:${m}`;
+}
+
+/**
+ * Time off as the days the vet entered. The stored end is the start of
+ * the day after the last one, so the last day off is the instant just
+ * before it — read in the vet's zone, as it was written.
+ */
+function describeTimeOff(t: { startsAt: Date; endsAt: Date }, timezone: string) {
+  const first = formatInTimeZone(t.startsAt, timezone, "yyyy-MM-dd");
+  const last = formatInTimeZone(new Date(t.endsAt.getTime() - 1), timezone, "yyyy-MM-dd");
+  return first === last ? first : `${first} to ${last}`;
 }
 
 export default async function AvailabilityPage() {
@@ -110,7 +122,11 @@ export default async function AvailabilityPage() {
       </section>
 
       <section className={card}>
-        <h2 className="mb-4 font-medium">Time off</h2>
+        <h2 className="mb-1 font-medium">Time off</h2>
+        <p className="mb-4 text-xs text-gray-500">
+          Whole days in {profile.timezone}, first and last day included. For a single
+          day, use the same date twice.
+        </p>
 
         {timeOff.length === 0 ? (
           <p className="text-sm text-gray-400">Nothing scheduled.</p>
@@ -119,7 +135,7 @@ export default async function AvailabilityPage() {
             {timeOff.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-4 py-3 text-sm">
                 <span>
-                  {t.startsAt.toISOString().slice(0, 10)} to {t.endsAt.toISOString().slice(0, 10)}
+                  {describeTimeOff(t, profile.timezone)}
                   {t.reason && <span className="text-gray-500"> · {t.reason}</span>}
                 </span>
                 <ActionForm
@@ -142,11 +158,11 @@ export default async function AvailabilityPage() {
 
         <ActionForm action={addTimeOff} className="mt-5 flex flex-wrap items-end gap-3">
           <div className="w-44">
-            <label className="mb-1 block text-xs text-gray-600" htmlFor="startsAt">From</label>
+            <label className="mb-1 block text-xs text-gray-600" htmlFor="startsAt">First day</label>
             <input id="startsAt" name="startsAt" type="date" className={field} required />
           </div>
           <div className="w-44">
-            <label className="mb-1 block text-xs text-gray-600" htmlFor="endsAt">To</label>
+            <label className="mb-1 block text-xs text-gray-600" htmlFor="endsAt">Last day</label>
             <input id="endsAt" name="endsAt" type="date" className={field} required />
           </div>
           <div className="w-48">

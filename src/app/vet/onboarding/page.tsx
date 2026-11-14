@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { createVetProfile } from "../actions";
+import { DEFAULT_TIMEZONE, listTimezones } from "@/lib/timezones";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
@@ -20,6 +21,7 @@ export default async function VetOnboardingPage() {
   const specialisations = await prisma.specialisation.findMany({
     orderBy: { name: "asc" },
   });
+  const timezones = listTimezones();
 
   return (
     <main className="mx-auto max-w-xl px-6 py-10">
@@ -68,6 +70,21 @@ export default async function VetOnboardingPage() {
               <option value="60">60 minutes</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className={label} htmlFor="timezone">Timezone</label>
+          <select id="timezone" name="timezone" className={field} defaultValue={DEFAULT_TIMEZONE}>
+            {timezones.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone.replaceAll("_", " ")}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Your consulting hours and days off are set in this timezone. Owners
+            see appointment times converted to their own.
+          </p>
         </div>
 
         <fieldset>
