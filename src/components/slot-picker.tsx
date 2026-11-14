@@ -4,14 +4,12 @@ import { useState, useSyncExternalStore } from "react";
 import { bookAppointment } from "@/app/appointments/actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import IntakeFields, { type IntakePet } from "@/components/intake-fields";
 
 
-type Pet = { id: string; name: string };
 // Slots arrive as ISO strings: a Date cannot cross the server/client
 // boundary intact, and the string is unambiguous about the instant.
-type Props = { vetProfileId: string; pets: Pet[]; slots: string[] };
-
-const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
+type Props = { vetProfileId: string; pets: IntakePet[]; slots: string[] };
 
 const subscribe = () => () => {};
 
@@ -71,47 +69,43 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
       <input type="hidden" name="vetProfileId" value={vetProfileId} />
       <input type="hidden" name="startsAt" value={selected ?? ""} />
 
-      <div className="max-h-80 overflow-y-auto pr-1">
-        {[...byDay.entries()].map(([day, times]) => (
-          <div key={day} className="mb-4">
-            <p className="mb-2 text-xs font-medium text-ink-soft">{day}</p>
-            <div className="flex flex-wrap gap-2">
-              {times.map((iso) => (
-                <button
-                  key={iso}
-                  type="button"
-                  onClick={() => setSelected(iso)}
-                  className={`rounded-md px-3 py-1.5 text-sm ${
-                    selected === iso
-                      ? "bg-navy-900 text-white"
-                      : "bg-mist hover:bg-aqua-100"
-                  }`}
-                >
-                  {new Date(iso).toLocaleTimeString(undefined, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </button>
-              ))}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-navy-900">Choose a time</h3>
+        <div className="max-h-80 overflow-y-auto pr-1">
+          {[...byDay.entries()].map(([day, times]) => (
+            <div key={day} className="mb-4">
+              <p className="mb-2 text-xs font-medium text-ink-soft">{day}</p>
+              <div className="flex flex-wrap gap-2">
+                {times.map((iso) => (
+                  <button
+                    key={iso}
+                    type="button"
+                    onClick={() => setSelected(iso)}
+                    className={`rounded-md px-3 py-1.5 text-sm ${
+                      selected === iso
+                        ? "bg-navy-900 text-white"
+                        : "bg-mist hover:bg-aqua-100"
+                    }`}
+                  >
+                    {new Date(iso).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="petId">Pet</label>
-        <select id="petId" name="petId" className={field} required>
-          {pets.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
           ))}
-        </select>
+        </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="reason">
-          Reason for visit
-        </label>
-        <textarea id="reason" name="reason" rows={3} className={field} />
+      <div className="border-t border-mist pt-5">
+        <h3 className="mb-1 text-sm font-semibold text-navy-900">Pre-visit brief</h3>
+        <p className="mb-4 text-xs text-ink-soft">
+          Your vet reads this before joining, so the call can start with
+          the problem rather than with questions about it.
+        </p>
+        <IntakeFields pets={pets} />
       </div>
 
       <SubmitButton disabled={!selected} pendingLabel="Booking...">

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { UrgencyBadge } from "@/components/intake-summary";
+import { DURATION_LABELS } from "@/lib/visit-intake";
 import { prisma } from "@/lib/prisma";
 import { requireVetProfile } from "@/lib/current-user";
 import {
@@ -101,6 +103,14 @@ export default async function VetAppointmentsPage() {
                     {a.pet.breed && ` · ${a.pet.breed.name}`}
                   </p>
                   <p className="text-xs text-ink-soft">Owner: {a.pet.owner.name ?? "—"}</p>
+                  {(a.urgency || a.symptomDuration) && (
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+                      <UrgencyBadge urgency={a.urgency} />
+                      {a.symptomDuration && (
+                        <span>Going on for {DURATION_LABELS[a.symptomDuration].toLowerCase()}</span>
+                      )}
+                    </p>
+                  )}
                   {a.reason && <p className="mt-2 text-sm text-ink">{a.reason}</p>}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">

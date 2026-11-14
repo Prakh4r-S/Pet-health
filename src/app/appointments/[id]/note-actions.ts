@@ -45,6 +45,32 @@ export async function saveScratch(appointmentId: string, scratch: string) {
   });
 }
 
+/**
+ * The structured fields of the draft, as posted by the review form.
+ * Shared by saving and finalising, which both accept the whole form.
+ */
+function readDraftFields(formData: FormData) {
+  const text = (name: string) => String(formData.get(name) ?? "").trim() || null;
+
+  const followUpRaw = String(formData.get("followUpOn") ?? "");
+  const followUpOn = followUpRaw ? new Date(followUpRaw) : null;
+  if (followUpOn && Number.isNaN(followUpOn.valueOf())) {
+    return { ok: false as const, error: "Enter a valid follow-up date." };
+  }
+
+  return {
+    ok: true as const,
+    data: {
+      presentingComplaint: text("presentingComplaint"),
+      examination: text("examination"),
+      assessment: text("assessment"),
+      plan: text("plan"),
+      followUpOn,
+      followUpNote: text("followUpNote"),
+    },
+  };
+}
+
 export async function saveNoteDraft(
   _previous: ActionState,
   formData: FormData,
@@ -56,21 +82,12 @@ export async function saveNoteDraft(
     return fail("This note is finalised. Add an amendment instead.");
   }
 
-  const followUpRaw = String(formData.get("followUpOn") ?? "");
-  const followUpOn = followUpRaw ? new Date(followUpRaw) : null;
-  if (followUpOn && Number.isNaN(followUpOn.valueOf())) {
-    return fail("Enter a valid follow-up date.");
-  }
+  const fields = readDraftFields(formData);
+  if (!fields.ok) return fail(fields.error);
 
   await prisma.consultationNote.update({
     where: { id: note.id },
-    data: {
-      presentingComplaint: String(formData.get("presentingComplaint") ?? "").trim() || null,
-      examination: String(formData.get("examination") ?? "").trim() || null,
-      assessment: String(formData.get("assessment") ?? "").trim() || null,
-      plan: String(formData.get("plan") ?? "").trim() || null,
-      followUpOn,
-    },
+    data: fields.data,
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
@@ -86,16 +103,37 @@ export async function finaliseNote(
 
   if (note.status === "FINALISED") return ok;
 
-  // A note with nothing in it is not a record. Requiring an assessment
-  // is a low bar, but it stops empty notes being signed off by accident.
-  if (!note.assessment?.trim()) {
-    return fail("Add an assessment and save the draft before finalising.");
+  // The review page sends the whole draft form with the finalise
+  // request, so what the vet sees on screen when they confirm is what
+  // gets locked — not whatever was last saved. Without this, an edit
+  // made after the last "Save draft" would be silently dropped at the
+  // one moment it matters most. A request without the form (an older
+  // page) finalises the saved draft as before.
+  let draft: ReturnType<typeof readDraftFields> | null = null;
+  if (formData.has("assessment")) {
+    draft = readDraftFields(formData);
+    if (!draft.ok) return fail(draft.error);
   }
 
+  const assessment = draft?.ok ? draft.data.assessment : note.assessment;
+
+  // A note with nothing in it is not a record. Requiring an assessment
+  // is a low bar, but it stops empty notes being signed off by accident.
+  if (!assessment?.trim()) {
+    return fail("Add a clinical assessment before finalising.");
+  }
+
+  const now = new Date();
   await prisma.$transaction([
-    prisma.consultationNote.update({
-      where: { id: note.id },
-      data: { status: "FINALISED", finalisedAt: new Date() },
+    // Conditional on still being a draft: two tabs finalising at once
+    // must not both write, and the second must not overwrite the first.
+    prisma.consultationNote.updateMany({
+      where: { id: note.id, status: "DRAFT" },
+      data: {
+        ...(draft?.ok ? draft.data : {}),
+        status: "FINALISED",
+        finalisedAt: now,
+      },
     }),
     // Finalising the note is also what marks the consultation done —
     // the two facts are the same event and should not be able to drift
@@ -108,6 +146,10 @@ export async function finaliseNote(
 
   revalidatePath(`/appointments/${appointmentId}/review`);
   revalidatePath("/vet/appointments");
+  // Finalising is what shares the record with the owner: their pages
+  // show finalised notes only (see lib/consultation-records).
+  revalidatePath("/appointments");
+  revalidatePath(`/pets/${appointment.petId}`);
   return ok;
 }
 

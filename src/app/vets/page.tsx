@@ -30,7 +30,7 @@ export default async function VetsPage({
     prisma.specialisation.findMany({ orderBy: { name: "asc" } }),
     prisma.pet.findMany({
       where: { ownerId: user.id, archivedAt: null },
-      select: { id: true, name: true },
+      select: { id: true, name: true, species: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     findVetsAvailableNow(specialisation),
@@ -46,7 +46,7 @@ export default async function VetsPage({
       </div>
 
       <InstantMatch
-        pets={pets}
+        pets={pets.map((p) => ({ id: p.id, name: p.name, species: p.species.name }))}
         specialisationSlug={specialisation}
         availableCount={availableNow.length}
       />

@@ -10,6 +10,7 @@ const ACCEPTABLE_FIELDS = [
   "examination",
   "assessment",
   "plan",
+  "followUpNote",
 ] as const;
 
 type AcceptableField = (typeof ACCEPTABLE_FIELDS)[number];

@@ -50,6 +50,7 @@ export default function ConsultationRecordView({ record }: { record: Consultatio
         <Field label="Assessment" value={record.assessment} />
         <Field label="Plan" value={record.plan} />
         <Field label="Follow up on" value={record.followUpOn} />
+        <Field label="Follow-up recommendation" value={record.followUpNote} />
       </dl>
 
       {record.amendments.length > 0 && (

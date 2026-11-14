@@ -26,6 +26,7 @@ import { FormPendingContext } from "@/components/submit-button";
 export default function ActionForm({
   action,
   children,
+  id,
   className,
   confirm,
   successMessage,
@@ -33,6 +34,8 @@ export default function ActionForm({
 }: {
   action: FormAction;
   children: React.ReactNode;
+  /** Lets controls elsewhere on the page read this form's values. */
+  id?: string;
   className?: string;
   /** If set, the user is asked this before the form is sent. */
   confirm?: string;
@@ -60,7 +63,7 @@ export default function ActionForm({
   };
 
   return (
-    <form ref={formRef} action={formAction} onSubmit={onSubmit} className={className}>
+    <form id={id} ref={formRef} action={formAction} onSubmit={onSubmit} className={className}>
       <FormPendingContext.Provider value={pending}>{children}</FormPendingContext.Provider>
 
       {/* basis-full / col-span-full: the banner takes its own row whether
