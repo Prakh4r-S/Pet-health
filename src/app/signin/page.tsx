@@ -53,10 +53,10 @@ export default async function SignInPage({
         priority
         className="mx-auto mb-6 h-auto w-48"
       />
-      <h1 className="text-3xl text-pine-900">
+      <h1 className="text-3xl text-navy-900">
         {asVet ? "Sign in as a vet" : "Sign in"}
       </h1>
-      <p className="mt-3 text-bark-soft">
+      <p className="mt-3 text-ink-soft">
         {asVet
           ? "You'll set up a practitioner profile with your licence number and consulting hours."
           : "Your pets' records, appointments and consultations."}
@@ -71,24 +71,24 @@ export default async function SignInPage({
       >
         <SubmitButton
           pendingLabel="Redirecting to Google..."
-          className="w-full rounded-md bg-pine-900 px-4 py-3 text-sm font-medium text-white hover:bg-pine-700"
+          className="w-full rounded-md bg-navy-900 px-4 py-3 text-sm font-medium text-white hover:bg-navy-700"
         >
           Continue with Google
         </SubmitButton>
       </form>
 
-      <p className="mt-6 text-sm text-bark-soft">
+      <p className="mt-6 text-sm text-ink-soft">
         {asVet ? (
           <>
             Looking after your own animals instead?{" "}
-            <Link href="/signin" className="text-pine-700 underline">
+            <Link href="/signin" className="text-navy-700 underline">
               Sign in as a pet owner
             </Link>
           </>
         ) : (
           <>
             Are you a vet?{" "}
-            <Link href="/signin?as=vet" className="text-pine-700 underline">
+            <Link href="/signin?as=vet" className="text-navy-700 underline">
               Set up a practitioner account
             </Link>
           </>

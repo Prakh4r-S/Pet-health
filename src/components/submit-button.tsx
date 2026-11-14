@@ -10,7 +10,7 @@ import { useFormStatus } from "react-dom";
 export const FormPendingContext = createContext(false);
 
 export const primaryButton =
-  "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
+  "rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700";
 
 /**
  * A submit button that knows when its form is busy.

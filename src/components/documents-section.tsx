@@ -45,7 +45,7 @@ export default function DocumentsSection({
       <h2 className="mb-4 font-medium">Documents</h2>
 
       {documents.length === 0 ? (
-        <p className="text-sm text-bark-faint">Nothing uploaded yet.</p>
+        <p className="text-sm text-ink-faint">Nothing uploaded yet.</p>
       ) : (
         <ul className="divide-y divide-mist">
           {documents.map((d) => (
@@ -59,7 +59,7 @@ export default function DocumentsSection({
                 >
                   {d.title}
                 </a>
-                <p className="text-xs text-bark-soft">
+                <p className="text-xs text-ink-soft">
                   {KIND_LABELS[d.kind] ?? d.kind}
                   {" · "}
                   {sizeLabel(d.sizeBytes)}
@@ -67,7 +67,7 @@ export default function DocumentsSection({
                   {d.createdAt}
                   {d.uploadedByName && ` · ${d.uploadedByName}`}
                 </p>
-                {d.note && <p className="mt-1 text-xs text-bark-soft">{d.note}</p>}
+                {d.note && <p className="mt-1 text-xs text-ink-soft">{d.note}</p>}
               </div>
               {d.canDelete && (
                 <ActionForm

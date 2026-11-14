@@ -3,10 +3,10 @@
 import type { PatientSummary } from "@/lib/patient-summary";
 
 const statusStyles: Record<string, string> = {
-  NEVER_GIVEN: "bg-mist text-bark",
+  NEVER_GIVEN: "bg-mist text-ink",
   OVERDUE: "bg-red-100 text-red-800",
   DUE_SOON: "bg-amber-100 text-amber-800",
-  UP_TO_DATE: "bg-pine-100 text-pine-900",
+  UP_TO_DATE: "bg-aqua-100 text-navy-900",
 };
 
 const statusLabels: Record<string, string> = {
@@ -52,8 +52,8 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-white">
       <div className="border-b border-mist px-5 py-4">
-        <h2 className="font-medium text-pine-900">{patient.name}</h2>
-        <p className="text-sm text-bark-soft">
+        <h2 className="font-medium text-navy-900">{patient.name}</h2>
+        <p className="text-sm text-ink-soft">
           {patient.species}
           {patient.breed && ` · ${patient.breed}`}
           {" · "}
@@ -95,7 +95,7 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
 
         {patient.documents.length > 0 && (
           <section>
-            <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-bark-soft">
+            <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Documents
             </h3>
             <ul className="mt-1.5 space-y-1">
@@ -111,7 +111,7 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
                   >
                     {d.title}
                   </a>
-                  <span className="block text-xs text-bark-soft">
+                  <span className="block text-xs text-ink-soft">
                     {kindLabels[d.kind] ?? d.kind} · {d.createdAt}
                   </span>
                 </li>
@@ -121,13 +121,13 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
         )}
 
         <section>
-          <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-bark-soft">
+          <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Weight
           </h3>
           <p className="mt-1 text-sm">
             {patient.latestWeightKg != null ? `${patient.latestWeightKg} kg` : "No records"}
             {weightTrend && (
-              <span className="text-bark-soft">
+              <span className="text-ink-soft">
                 {" "}
                 · {weightTrend} over {patient.weights.length} readings
               </span>
@@ -137,15 +137,15 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
 
         {patient.conditions.length > 0 && (
           <section>
-            <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-bark-soft">
+            <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Conditions
             </h3>
             <ul className="mt-1 space-y-1">
               {patient.conditions.map((c, i) => (
                 <li key={i} className="text-sm">
                   {c.name}
-                  <span className="text-bark-soft">{c.ongoing ? " · ongoing" : " · resolved"}</span>
-                  {c.notes && <span className="block text-xs text-bark-soft">{c.notes}</span>}
+                  <span className="text-ink-soft">{c.ongoing ? " · ongoing" : " · resolved"}</span>
+                  {c.notes && <span className="block text-xs text-ink-soft">{c.notes}</span>}
                 </li>
               ))}
             </ul>
@@ -153,7 +153,7 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
         )}
 
         <section>
-          <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-bark-soft">
+          <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Vaccinations
           </h3>
           <ul className="mt-1.5 space-y-1.5">
@@ -162,7 +162,7 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
                 <span className="text-sm">
                   {v.name}
                   {v.lastGivenOn && (
-                    <span className="block text-xs text-bark-soft">
+                    <span className="block text-xs text-ink-soft">
                       Last {v.lastGivenOn}
                       {v.nextDueOn && ` · due ${v.nextDueOn}`}
                     </span>

@@ -54,8 +54,8 @@ export default async function AvailabilityPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-2xl text-pine-900">Your availability</h1>
-      <p className="mb-8 mt-2 text-sm text-bark-soft">
+      <h1 className="text-2xl text-navy-900">Your availability</h1>
+      <p className="mb-8 mt-2 text-sm text-ink-soft">
         Weekly hours, in {profile.timezone}. {profile.slotMinutes}-minute appointments
         {weeklySlots > 0 && ` · ${weeklySlots} slots per week`}.
       </p>
@@ -69,7 +69,7 @@ export default async function AvailabilityPage() {
               <span className="w-28 text-sm font-medium">{name}</span>
               <div className="flex flex-1 flex-wrap gap-2">
                 {windows.length === 0 ? (
-                  <span className="text-sm text-bark-faint">Not available</span>
+                  <span className="text-sm text-ink-faint">Not available</span>
                 ) : (
                   windows.map((w) => (
                     <ActionForm
@@ -99,7 +99,7 @@ export default async function AvailabilityPage() {
           className="mt-5 flex flex-wrap items-end gap-3"
         >
           <div className="w-40">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="dayOfWeek">Day</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="dayOfWeek">Day</label>
             <select id="dayOfWeek" name="dayOfWeek" className={field} defaultValue="1">
               {DAYS.map((d, i) => (
                 <option key={d} value={i}>{d}</option>
@@ -107,36 +107,36 @@ export default async function AvailabilityPage() {
             </select>
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="startTime">From</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="startTime">From</label>
             <input id="startTime" name="startTime" type="time" defaultValue="09:00" className={field} required />
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="endTime">To</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="endTime">To</label>
             <input id="endTime" name="endTime" type="time" defaultValue="17:00" className={field} required />
           </div>
           <SubmitButton pendingLabel="Adding...">Add hours</SubmitButton>
         </ActionForm>
-        <p className="mt-2 text-xs text-bark-soft">
+        <p className="mt-2 text-xs text-ink-soft">
           Click an existing window to remove it. Overlapping windows are merged.
         </p>
       </section>
 
       <section className={card}>
         <h2 className="mb-1 font-medium">Time off</h2>
-        <p className="mb-4 text-xs text-bark-soft">
+        <p className="mb-4 text-xs text-ink-soft">
           Whole days in {profile.timezone}, first and last day included. For a single
           day, use the same date twice.
         </p>
 
         {timeOff.length === 0 ? (
-          <p className="text-sm text-bark-faint">Nothing scheduled.</p>
+          <p className="text-sm text-ink-faint">Nothing scheduled.</p>
         ) : (
           <ul className="divide-y divide-mist">
             {timeOff.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-4 py-3 text-sm">
                 <span>
                   {describeTimeOff(t, profile.timezone)}
-                  {t.reason && <span className="text-bark-soft"> · {t.reason}</span>}
+                  {t.reason && <span className="text-ink-soft"> · {t.reason}</span>}
                 </span>
                 <ActionForm
                   action={removeTimeOff}
@@ -158,15 +158,15 @@ export default async function AvailabilityPage() {
 
         <ActionForm action={addTimeOff} className="mt-5 flex flex-wrap items-end gap-3">
           <div className="w-44">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="startsAt">First day</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="startsAt">First day</label>
             <input id="startsAt" name="startsAt" type="date" className={field} required />
           </div>
           <div className="w-44">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="endsAt">Last day</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="endsAt">Last day</label>
             <input id="endsAt" name="endsAt" type="date" className={field} required />
           </div>
           <div className="w-48">
-            <label className="mb-1 block text-xs text-bark-soft" htmlFor="reason">Reason (optional)</label>
+            <label className="mb-1 block text-xs text-ink-soft" htmlFor="reason">Reason (optional)</label>
             <input id="reason" name="reason" className={field} />
           </div>
           <SubmitButton pendingLabel="Adding...">Add</SubmitButton>

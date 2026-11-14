@@ -8,7 +8,7 @@ import SubmitButton from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const smallButton =
-  "rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700";
+  "rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700";
 
 export type ProposedMedication = {
   drug: string;
@@ -61,7 +61,7 @@ function ProposedField({
     <ActionForm action={acceptProposedField} className="rounded-md border border-mist p-3">
       <input type="hidden" name="appointmentId" value={appointmentId} />
       <input type="hidden" name="field" value={name} />
-      <label className="mb-1 block text-xs font-medium text-bark-soft">
+      <label className="mb-1 block text-xs font-medium text-ink-soft">
         {FIELD_LABELS[name]}
       </label>
       {/* Editable before accepting — the vet should be able to correct a
@@ -87,7 +87,7 @@ export default function TranscriptPanel({
     return (
       <section className="rounded-lg border border-mist p-5">
         <h2 className="mb-2 font-medium">Draft from recording</h2>
-        <p className="text-sm text-bark-faint">
+        <p className="text-sm text-ink-faint">
           No audio was recorded for this consultation.
         </p>
       </section>
@@ -101,7 +101,7 @@ export default function TranscriptPanel({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-medium">Draft from recording</h2>
         {recording.durationSeconds && (
-          <span className="text-xs text-bark-soft">
+          <span className="text-xs text-ink-soft">
             {Math.floor(recording.durationSeconds / 60)}m {recording.durationSeconds % 60}s
           </span>
         )}
@@ -110,7 +110,7 @@ export default function TranscriptPanel({
       {recording.status === "UPLOADED" && (
         <ActionForm action={requestTranscription}>
           <input type="hidden" name="appointmentId" value={appointmentId} />
-          <p className="mb-3 text-sm text-bark-soft">
+          <p className="mb-3 text-sm text-ink-soft">
             Transcribe the recording to get a suggested note. Everything it
             produces is a proposal — nothing is added to the record until you
             accept it.
@@ -122,7 +122,7 @@ export default function TranscriptPanel({
       )}
 
       {recording.status === "TRANSCRIBING" && !recording.stalled && (
-        <p className="text-sm text-bark-soft">
+        <p className="text-sm text-ink-soft">
           Transcribing. This can take up to a minute. Reload the page to check.
         </p>
       )}
@@ -172,7 +172,7 @@ export default function TranscriptPanel({
           )}
 
           {noteLocked ? (
-            <p className="text-sm text-bark-soft">
+            <p className="text-sm text-ink-soft">
               The note is finalised, so these can no longer be added.
             </p>
           ) : (
@@ -202,7 +202,7 @@ export default function TranscriptPanel({
 
           {proposal.medications.length > 0 && !noteLocked && (
             <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-bark-soft">
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
                 Medications mentioned
               </h3>
               <div className="grid gap-3">
@@ -215,11 +215,11 @@ export default function TranscriptPanel({
                     <input type="hidden" name="appointmentId" value={appointmentId} />
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="w-36">
-                        <label className="mb-1 block text-xs text-bark-soft">Drug</label>
+                        <label className="mb-1 block text-xs text-ink-soft">Drug</label>
                         <input name="drug" className={field} defaultValue={m.drug} required />
                       </div>
                       <div className="w-24">
-                        <label className="mb-1 block text-xs text-bark-soft">Dose</label>
+                        <label className="mb-1 block text-xs text-ink-soft">Dose</label>
                         <input
                           name="dose"
                           className={field}
@@ -229,7 +229,7 @@ export default function TranscriptPanel({
                         />
                       </div>
                       <div className="w-32">
-                        <label className="mb-1 block text-xs text-bark-soft">Frequency</label>
+                        <label className="mb-1 block text-xs text-ink-soft">Frequency</label>
                         <input
                           name="frequency"
                           className={field}
@@ -239,7 +239,7 @@ export default function TranscriptPanel({
                         />
                       </div>
                       <div className="w-20">
-                        <label className="mb-1 block text-xs text-bark-soft">Days</label>
+                        <label className="mb-1 block text-xs text-ink-soft">Days</label>
                         <input
                           name="durationDays"
                           type="number"
@@ -256,7 +256,7 @@ export default function TranscriptPanel({
                       /* The sentence the drug was named in. Checking a
                          dose against what was actually said is real
                          verification; accepting a bare field is not. */
-                      <p className="mt-2 text-xs italic text-bark-soft">
+                      <p className="mt-2 text-xs italic text-ink-soft">
                         Heard: “{m.evidence}”
                       </p>
                     )}
@@ -271,7 +271,7 @@ export default function TranscriptPanel({
               <summary className="cursor-pointer text-sm font-medium">
                 Full transcript
               </summary>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-bark">
+              <p className="mt-2 whitespace-pre-wrap text-sm text-ink">
                 {recording.transcript}
               </p>
             </details>

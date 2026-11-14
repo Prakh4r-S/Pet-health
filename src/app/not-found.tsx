@@ -12,22 +12,22 @@ export const metadata = { title: "Not found · Max Petcare" };
 export default function NotFound() {
   return (
     <main className="mx-auto flex max-w-md flex-col px-6 py-24 text-center">
-      <p className="text-sm font-medium uppercase tracking-wide text-pine-500">Not found</p>
-      <h1 className="mt-3 text-3xl text-pine-900">There&apos;s nothing here</h1>
-      <p className="mt-3 text-bark-soft">
+      <p className="text-sm font-medium uppercase tracking-wide text-aqua-600">Not found</p>
+      <h1 className="mt-3 text-3xl text-navy-900">There&apos;s nothing here</h1>
+      <p className="mt-3 text-ink-soft">
         The page may have moved, or the record isn&apos;t one you have access to.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/pets"
-          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
+          className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700"
         >
           Your pets
         </Link>
         <Link
           href="/appointments"
-          className="rounded-md border border-mist px-4 py-2 text-sm text-pine-900 hover:bg-pine-50"
+          className="rounded-md border border-mist px-4 py-2 text-sm text-navy-900 hover:bg-aqua-50"
         >
           Appointments
         </Link>

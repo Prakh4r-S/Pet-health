@@ -44,7 +44,7 @@ export default function NotesPanel({ appointmentId }: { appointmentId: string })
     <div className="rounded-lg border border-mist bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-medium">Notes</h3>
-        <span className="text-xs text-bark-faint">
+        <span className="text-xs text-ink-faint">
           {status === "saving" ? "Saving..." : status === "saved" ? "Saved" : ""}
         </span>
       </div>

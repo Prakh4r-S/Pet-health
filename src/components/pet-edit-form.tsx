@@ -3,7 +3,7 @@ import SubmitButton from "@/components/submit-button";
 import { archivePet, updatePet } from "@/app/pets/[id]/actions";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
-const label = "mb-1 block text-xs text-bark-soft";
+const label = "mb-1 block text-xs text-ink-soft";
 
 export type EditablePet = {
   id: string;
@@ -35,7 +35,7 @@ export default function PetEditForm({
 }) {
   return (
     <details className="group mb-6 rounded-lg border border-mist">
-      <summary className="cursor-pointer select-none px-5 py-3 text-sm font-medium text-pine-700 hover:text-pine-900">
+      <summary className="cursor-pointer select-none px-5 py-3 text-sm font-medium text-navy-700 hover:text-navy-900">
         Edit details
       </summary>
 
@@ -104,7 +104,7 @@ export default function PetEditForm({
               className={field}
               defaultValue={pet.birthDate ?? ""}
             />
-            <label className="mt-2 flex items-center gap-2 text-xs text-bark-soft">
+            <label className="mt-2 flex items-center gap-2 text-xs text-ink-soft">
               <input
                 type="checkbox"
                 name="birthDateIsApprox"
@@ -147,7 +147,7 @@ export default function PetEditForm({
 
         <div className="mt-6 border-t border-mist pt-5">
           <h3 className="text-sm font-medium">Archive {pet.name}</h3>
-          <p className="mt-1 text-xs text-bark-soft">
+          <p className="mt-1 text-xs text-ink-soft">
             Removes {pet.name} from your list. Consultation records are kept, but
             you won&apos;t be able to open this page or book appointments for{" "}
             {pet.name} afterwards.

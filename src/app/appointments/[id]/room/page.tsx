@@ -12,11 +12,11 @@ export const dynamic = "force-dynamic";
 function Blocked({ title, body }: { title: string; body: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-lg px-6 py-20 text-center">
-      <h1 className="text-xl text-pine-900">{title}</h1>
-      <p className="mt-2 text-sm text-bark-soft">{body}</p>
+      <h1 className="text-xl text-navy-900">{title}</h1>
+      <p className="mt-2 text-sm text-ink-soft">{body}</p>
       <Link
         href="/appointments"
-        className="mt-6 inline-block rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
+        className="mt-6 inline-block rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700"
       >
         Back to appointments
       </Link>
@@ -91,10 +91,10 @@ export default async function ConsultationRoomPage({
   return (
     <main className="mx-auto max-w-6xl px-6 py-6">
       <div className="mb-4">
-        <h1 className="text-lg text-pine-900">
+        <h1 className="text-lg text-navy-900">
           {appointment.pet.name} · {appointment.pet.species.name}
         </h1>
-        <p className="text-sm text-bark-soft">
+        <p className="text-sm text-ink-soft">
           {access.isVet
             ? "Consultation"
             : `With ${appointment.vetProfile.user.name ?? "your vet"}`}

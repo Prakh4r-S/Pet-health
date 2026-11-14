@@ -1,23 +1,28 @@
 @import "tailwindcss";
 
 @theme {
-  /* Deep pine rather than clinical blue: this is a product about
-     animals and care, and medical blue is what every health app
-     reaches for. */
-  --color-pine-50: #f1f6f3;
-  --color-pine-100: #dceae2;
-  --color-pine-500: #2c6b58;
-  --color-pine-700: #1b4d3f;
-  --color-pine-900: #143d33;
+  /* The palette is taken from the logo: its navy line and the teal of
+     its wordmark. Navy carries everything that has to be read or
+     pressed; teal is the accent and the source of the pale tints. */
+  --color-navy-900: #0c1c44; /* the logo's ink, exactly */
+  --color-navy-700: #1f3a73;
 
-  --color-bark: #22201d;
-  --color-bark-soft: #5b5751;
+  /* The logo's teal is #4c9c9c — right for large type and decoration,
+     but too light to pass as small text on white. aqua-600 is the same
+     hue darkened until it does. */
+  --color-aqua-400: #4c9c9c;
+  --color-aqua-600: #2c7c7d;
+  --color-aqua-100: #d9ecec;
+  --color-aqua-50: #f0f7f7;
+
+  --color-ink: #171c2b;
+  --color-ink-soft: #535a6b;
   /* Placeholder and "nothing here yet" text: present, but not competing. */
-  --color-bark-faint: #8b867e;
-  --color-mist: #eef1ee;
+  --color-ink-faint: #858b99;
+  --color-mist: #ecf0f3;
   /* Mist is right for dividers and card edges but too faint to mark out
      something you are meant to type into. */
-  --color-mist-deep: #cbd5cf;
+  --color-mist-deep: #c7cfd9;
 
   --font-display: var(--font-newsreader), Georgia, serif;
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
@@ -34,7 +39,7 @@
 
   body {
     background: white;
-    color: var(--color-bark);
+    color: var(--color-ink);
     font-family: var(--font-sans);
   }
 
@@ -53,7 +58,7 @@
 /* Keyboard focus stays visible everywhere. The default outline is
    removed often enough by resets that it is worth restating. */
 :focus-visible {
-  outline: 2px solid var(--color-pine-500);
+  outline: 2px solid var(--color-aqua-600);
   outline-offset: 2px;
 }
 

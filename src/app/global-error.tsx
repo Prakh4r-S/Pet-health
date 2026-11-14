@@ -23,24 +23,24 @@ export default function GlobalError({
       <body className="flex min-h-screen flex-col">
         <title>Something went wrong · Max Petcare</title>
         <main className="mx-auto flex max-w-md flex-col px-6 py-24 text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-pine-500">
+          <p className="text-sm font-medium uppercase tracking-wide text-aqua-600">
             Something went wrong
           </p>
-          <h1 className="mt-3 text-3xl text-pine-900">Max Petcare is having trouble</h1>
-          <p className="mt-3 text-bark-soft">
+          <h1 className="mt-3 text-3xl text-navy-900">Max Petcare is having trouble</h1>
+          <p className="mt-3 text-ink-soft">
             The page couldn&apos;t be loaded. This is usually temporary.
           </p>
           <div className="mt-8">
             <button
               type="button"
               onClick={() => retry()}
-              className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
+              className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700"
             >
               Try again
             </button>
           </div>
           {error.digest && (
-            <p className="mt-8 text-xs text-bark-soft">
+            <p className="mt-8 text-xs text-ink-soft">
               If this keeps happening, quote reference{" "}
               <code className="rounded bg-mist px-1.5 py-0.5">{error.digest}</code>.
             </p>

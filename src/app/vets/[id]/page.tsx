@@ -33,24 +33,24 @@ export default async function VetDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/vets" className="text-sm text-bark-soft hover:underline">
+      <Link href="/vets" className="text-sm text-ink-soft hover:underline">
         Back to vets
       </Link>
 
       <header className="mb-8 mt-3">
-        <h1 className="text-2xl text-pine-900">{vet.user.name ?? "Vet"}</h1>
-        <p className="text-sm text-bark-soft">
+        <h1 className="text-2xl text-navy-900">{vet.user.name ?? "Vet"}</h1>
+        <p className="text-sm text-ink-soft">
           {vet.clinicName ?? "Independent"}
           {vet.city && ` · ${vet.city}`}
           {vet.yearsExperience != null && ` · ${vet.yearsExperience} years`}
           {` · ${vet.slotMinutes}-minute appointments`}
         </p>
         {vet.specialisations.length > 0 && (
-          <p className="mt-2 text-xs text-bark-soft">
+          <p className="mt-2 text-xs text-ink-soft">
             {vet.specialisations.map((s) => s.name).join(" · ")}
           </p>
         )}
-        {vet.bio && <p className="mt-4 text-sm leading-6 text-bark">{vet.bio}</p>}
+        {vet.bio && <p className="mt-4 text-sm leading-6 text-ink">{vet.bio}</p>}
       </header>
 
       <section className="rounded-lg border border-mist p-5">

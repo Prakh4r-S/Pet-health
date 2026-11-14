@@ -73,10 +73,10 @@ export default function ConsultationWorkspace({
                 onClick={() => setPanelOpen((v) => !v)}
                 aria-expanded={panelOpen}
                 aria-controls="patient-records"
-                className="flex w-full items-center justify-between rounded-md border border-mist bg-white px-3 py-2 text-sm font-medium hover:bg-pine-50"
+                className="flex w-full items-center justify-between rounded-md border border-mist bg-white px-3 py-2 text-sm font-medium hover:bg-aqua-50"
               >
                 <span>Patient records · {patient.name}</span>
-                <span className="text-bark-soft">{panelOpen ? "Hide" : "Show"}</span>
+                <span className="text-ink-soft">{panelOpen ? "Hide" : "Show"}</span>
               </button>
               {panelOpen && (
                 <div
