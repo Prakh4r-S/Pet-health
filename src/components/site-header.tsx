@@ -12,7 +12,12 @@ import SubmitButton from "@/components/submit-button";
  * showing each person only what applies to them.
  *
  * A vet is also an owner — they may have their own pets — so the vet nav
- * includes the owner links rather than replacing them.
+ * includes the owner links rather than replacing them. The reverse path
+ * is offered too: an owner who is not yet a vet gets a link to
+ * practitioner setup, since otherwise the only way in is the vet door on
+ * the sign-in page, which a signed-in person never sees.
+ *
+ * Signed-out visitors get the landing page's section links instead.
  */
 export default async function SiteHeader() {
   const session = await auth();
@@ -50,6 +55,11 @@ export default async function SiteHeader() {
             <Link href="/assistant" className="hover:text-pine-700">
               Ask
             </Link>
+            {!isVet && (
+              <Link href="/vet/onboarding" className="text-bark-soft hover:text-pine-700">
+                Become a vet
+              </Link>
+            )}
             <form
               action={async () => {
                 "use server";
@@ -65,12 +75,20 @@ export default async function SiteHeader() {
             </form>
           </nav>
         ) : (
-          <Link
-            href="/signin"
-            className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
-          >
-            Sign in
-          </Link>
+          <nav className="flex items-center gap-5 text-sm">
+            <Link href="/#how-it-works" className="hidden hover:text-pine-700 sm:inline">
+              How it works
+            </Link>
+            <Link href="/#for-vets" className="hidden hover:text-pine-700 sm:inline">
+              For veterinarians
+            </Link>
+            <Link
+              href="/signin"
+              className="rounded-md bg-pine-900 px-4 py-2 text-white hover:bg-pine-700"
+            >
+              Sign in
+            </Link>
+          </nav>
         )}
       </div>
     </header>

@@ -1,11 +1,22 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/../auth";
 import { prisma } from "@/lib/prisma";
+import { RETURN_TO_HEADER, signInUrl } from "@/lib/return-to";
 
-/** The signed-in user, or a redirect to sign-in. */
+/**
+ * The signed-in user, or a redirect to sign-in.
+ *
+ * The redirect carries the path that was being requested, so that
+ * following a link to an appointment while signed out ends at that
+ * appointment rather than at a generic start page.
+ */
 export async function getCurrentUser() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/signin");
+  if (!session?.user?.id) {
+    const requested = (await headers()).get(RETURN_TO_HEADER);
+    redirect(signInUrl(requested));
+  }
   return session.user as {
     id: string;
     role: "OWNER" | "VET";
