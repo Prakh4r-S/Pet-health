@@ -9,6 +9,8 @@ import WeightChart from "@/components/weight-chart";
 import DocumentsSection from "@/components/documents-section";
 import PetEditForm from "@/components/pet-edit-form";
 import PetMedicalHistory from "@/components/pet-medical-history";
+import PassportCard from "@/components/passport-card";
+import { getPassportForPet } from "@/lib/passport";
 import ConsultationRecordView from "@/components/consultation-record";
 import LocalTime from "@/components/local-time";
 import { consultationRecordSelect, toOwnerRecord } from "@/lib/consultation-records";
@@ -63,7 +65,7 @@ export default async function PetDetailPage({
     },
   });
 
-  const [standings, vaccineTypes, breeds, pastAppointments] = await Promise.all([
+  const [standings, vaccineTypes, breeds, pastAppointments, sharing] = await Promise.all([
     getVaccineStandings(pet.id),
     prisma.vaccineType.findMany({
       where: { speciesId: pet.speciesId },
@@ -91,6 +93,11 @@ export default async function PetDetailPage({
           },
         })
       : [],
+    // The token is a credential for the public page. It is read only for
+    // the owner, so it is never in a response sent to a treating vet.
+    access.role === "OWNER"
+      ? getPassportForPet(pet.id)
+      : { available: false as const, passport: null },
   ]);
 
   const consultations = pastAppointments.flatMap((a) => {
@@ -172,6 +179,21 @@ export default async function PetDetailPage({
             birthDate: fmtOrNull(pet.birthDate),
             birthDateIsApprox: pet.birthDateIsApprox,
           }}
+        />
+      )}
+
+      {/* Owner only, and only once the database has the table for it. */}
+      {access.role === "OWNER" && sharing.available && (
+        <PassportCard
+          petId={pet.id}
+          petName={pet.name}
+          passport={
+            sharing.passport && {
+              token: sharing.passport.token,
+              contactNote: sharing.passport.contactNote,
+              createdAt: sharing.passport.createdAt.toISOString().slice(0, 10),
+            }
+          }
         />
       )}
 

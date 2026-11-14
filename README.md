@@ -40,6 +40,13 @@ proposed note. The vet accepts fields individually into their own record.
 Nothing generated reaches the clinical record without a human accepting
 it.
 
+**Health passport.** An owner can publish a read-only summary of one pet —
+allergies, ongoing conditions, current medication, vaccinations, basic
+details and a contact note — at an unguessable link, for a sitter or an
+emergency vet with no account. Documents, consultation notes and the
+owner's email are never included, and the link can be replaced or
+revoked at any time.
+
 **Records assistant.** A chat interface answering questions about the
 owner's own records, grounded in retrieved data, with clinical questions
 redirected to booking a consultation.

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { fail, ok, type ActionState } from "@/lib/action-result";
+import { newPassportToken } from "@/lib/passport";
 
 /**
  * Confirms the pet belongs to the signed-in user before any write.
@@ -336,6 +337,79 @@ export async function removeCondition(
   const id = String(formData.get("id") ?? "");
 
   await prisma.medicalCondition.deleteMany({ where: { id, petId: pet.id } });
+
+  revalidatePath(`/pets/${pet.id}`);
+  return ok;
+}
+
+// ---------------------------------------------------------------
+// Health passport (public share link)
+// ---------------------------------------------------------------
+
+const MAX_CONTACT_NOTE = 300;
+
+function readContactNote(formData: FormData) {
+  return String(formData.get("contactNote") ?? "").trim() || null;
+}
+
+/**
+ * Creates the share link, or replaces it with a new one.
+ *
+ * One action for both because they are the same write: after it, exactly
+ * one token works for this pet and it is a fresh one. Replacing is how a
+ * link that has gone further than intended is taken back without giving
+ * up sharing altogether — the old URL stops working at once.
+ */
+export async function sharePassport(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const petId = String(formData.get("petId") ?? "");
+  const pet = await assertOwnership(petId);
+
+  const token = newPassportToken();
+  await prisma.petPassport.upsert({
+    where: { petId: pet.id },
+    update: { token },
+    create: { petId: pet.id, token },
+  });
+
+  revalidatePath(`/pets/${pet.id}`);
+  return ok;
+}
+
+/** Turns sharing off. The link stops working; nothing else is touched. */
+export async function revokePassport(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const petId = String(formData.get("petId") ?? "");
+  const pet = await assertOwnership(petId);
+
+  await prisma.petPassport.deleteMany({ where: { petId: pet.id } });
+
+  revalidatePath(`/pets/${pet.id}`);
+  return ok;
+}
+
+/** The owner's own words on how to reach them, shown on the passport. */
+export async function savePassportContact(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const petId = String(formData.get("petId") ?? "");
+  const pet = await assertOwnership(petId);
+
+  const contactNote = readContactNote(formData);
+  if (contactNote && contactNote.length > MAX_CONTACT_NOTE) {
+    return fail(`Keep the contact note under ${MAX_CONTACT_NOTE} characters.`);
+  }
+
+  const { count } = await prisma.petPassport.updateMany({
+    where: { petId: pet.id },
+    data: { contactNote },
+  });
+  if (count === 0) return fail("Create the share link first.");
 
   revalidatePath(`/pets/${pet.id}`);
   return ok;
