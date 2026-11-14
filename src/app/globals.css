@@ -24,8 +24,18 @@
      something you are meant to type into. */
   --color-mist-deep: #c7cfd9;
 
-  --font-display: var(--font-newsreader), Georgia, serif;
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  /* The type stack Instagram's own interface uses: whatever the device
+     calls its system font — San Francisco on Apple devices, Segoe UI on
+     Windows, Roboto on Android. Nothing is downloaded, so text is never
+     swapped in late. (Instagram's brand typeface, Instagram Sans, is
+     proprietary to Meta and not licensed for use elsewhere.)
+
+     Headings and body share the one family and are told apart by weight
+     and size, as they are there. `font-display` is kept as a name so
+     headings can be given a face of their own again in one place. */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sans);
 }
 
 /* Element defaults live in the base layer so that a utility class on the
@@ -43,14 +53,13 @@
     font-family: var(--font-sans);
   }
 
-  /* Newsreader is loaded at 400 and 500 only. Headings may be set to
-     font-medium; anything heavier would be synthesised by the browser,
-     which smears a text serif. */
+  /* Semibold by default. System fonts ship every weight, so unlike the
+     serif this replaced there is no risk of the browser faking one. */
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: -0.01em;
   }
 }

@@ -68,7 +68,7 @@ function RecordPreview() {
       <div aria-hidden="true">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-display text-2xl text-navy-900">Biscuit</p>
+            <p className="font-display text-2xl font-semibold text-navy-900">Biscuit</p>
             <p className="mt-0.5 text-sm text-ink-soft">Beagle · 4 yr 2 mo · 10.4 kg</p>
           </div>
           <span className="rounded-full bg-aqua-50 px-2.5 py-1 text-xs text-navy-700">
@@ -194,7 +194,7 @@ export default async function LandingPage() {
           <ol className="mt-10 grid gap-8 md:grid-cols-3">
             {steps.map((step, i) => (
               <li key={step.title}>
-                <p className="font-display text-4xl text-aqua-400">{i + 1}</p>
+                <p className="font-display text-4xl font-semibold text-aqua-400">{i + 1}</p>
                 <h3 className="mt-3 text-xl text-navy-900">{step.title}</h3>
                 <p className="mt-2 leading-7 text-ink-soft">{step.body}</p>
               </li>

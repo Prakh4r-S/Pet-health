@@ -8,8 +8,7 @@ import "./globals.css";
  * error.tsx cannot catch that, because it renders inside the layout — and
  * the layout's header reads the database, so it can fail like any page.
  * This replaces the whole document, which is why it carries its own
- * <html> and <body> and imports the stylesheet directly. The layout's
- * web fonts are not available here; headings fall back to Georgia.
+ * <html> and <body> and imports the stylesheet directly.
  */
 export default function GlobalError({
   error,

@@ -34,7 +34,7 @@ export default async function SiteHeader() {
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4">
         <Link
           href="/"
-          className="flex items-center gap-2 whitespace-nowrap font-display text-lg text-navy-900"
+          className="flex items-center gap-2 whitespace-nowrap font-display text-lg font-semibold text-navy-900"
         >
           {/* The drawing from the logo, without its wordmark: at this size
               the lettering would be unreadable, so the name is set as
