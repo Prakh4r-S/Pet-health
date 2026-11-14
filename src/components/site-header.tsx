@@ -29,7 +29,7 @@ export default async function SiteHeader() {
 
   return (
     <header className="border-b border-mist">
-      {/* Wraps rather than overflows: a vet's nav has seven items, which
+      {/* Wraps rather than overflows: a vet's nav has nine items, which
           do not fit beside the logo on a phone. */}
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4">
         <Link
@@ -53,6 +53,9 @@ export default async function SiteHeader() {
                 </Link>
                 <Link href="/vet/availability" className="hover:text-navy-700">
                   Availability
+                </Link>
+                <Link href="/vet/profile" className="whitespace-nowrap hover:text-navy-700">
+                  Clinic Profile
                 </Link>
                 <span className="hidden h-4 w-px bg-mist sm:block" />
               </>

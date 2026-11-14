@@ -5,6 +5,7 @@ import { createVetProfile } from "../actions";
 import { DEFAULT_TIMEZONE, listTimezones } from "@/lib/timezones";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import LocationFields from "@/components/location-fields";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const label = "block text-sm font-medium mb-1";
@@ -34,19 +35,23 @@ export default async function VetOnboardingPage() {
       <ActionForm action={createVetProfile} className="grid gap-5" resetOnSuccess={false}>
         <div>
           <label className={label} htmlFor="licenceNumber">Licence number</label>
-          <input id="licenceNumber" name="licenceNumber" className={field} required />
+          <input id="licenceNumber" name="licenceNumber" className={field} maxLength={60} required />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={label} htmlFor="clinicName">Clinic</label>
-            <input id="clinicName" name="clinicName" className={field} />
-          </div>
-          <div>
-            <label className={label} htmlFor="city">City</label>
-            <input id="city" name="city" className={field} />
-          </div>
+        <div>
+          <label className={label} htmlFor="clinicName">Clinic or hospital</label>
+          <input id="clinicName" name="clinicName" className={field} maxLength={120} />
         </div>
+
+        <fieldset>
+          <legend className={label}>Where you practise</legend>
+          <LocationFields
+            defaults={{ city: null, state: null, postalCode: null, latitude: null, longitude: null }}
+            precision="exact"
+            buttonLabel="Set clinic GPS coordinates"
+            hint="Lets owners find you by distance. Use the button while you are at the clinic; you can add or correct the address and coordinates later under Clinic Profile."
+          />
+        </fieldset>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -98,6 +103,20 @@ export default async function VetOnboardingPage() {
             ))}
           </div>
         </fieldset>
+
+        <div>
+          <label className={label} htmlFor="specialties">Other specialties</label>
+          <input
+            id="specialties"
+            name="specialties"
+            className={field}
+            placeholder="Dogs, Cats, Surgery"
+          />
+          <p className="mt-1 text-xs text-ink-soft">
+            Anything the list above does not cover — animals you treat, procedures
+            you do. Separate with commas.
+          </p>
+        </div>
 
         <div>
           <label className={label} htmlFor="bio">About you</label>

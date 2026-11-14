@@ -104,7 +104,10 @@ export default function ProfileForm({ profile }: { profile: EditableProfile }) {
         <legend className="mb-3 font-display text-lg font-semibold text-navy-900">
           Location
         </legend>
-        <LocationFields defaults={profile} />
+        <LocationFields
+          defaults={profile}
+          hint="Used to suggest vets near you. Your position is rounded to about 100 m, and looked up with OpenStreetMap to fill in the city. Save to keep it."
+        />
       </fieldset>
 
       <div>

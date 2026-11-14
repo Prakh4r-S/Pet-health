@@ -13,12 +13,14 @@ type Status =
 type Place = { city: string; state: string; postalCode: string };
 
 /**
- * Three decimal places is roughly a hundred metres: plenty to rank vets
- * by distance, and not a record of which building someone lives in.
+ * How finely a position is kept.
+ *
+ * `area` is three decimal places, roughly a hundred metres: plenty to
+ * rank vets by distance, and not a record of which building someone
+ * lives in. `exact` is five, about a metre, for a clinic — a public
+ * address that people need to find.
  */
-function coarse(degrees: number) {
-  return degrees.toFixed(3);
-}
+const DECIMALS = { area: 3, exact: 5 } as const;
 
 /**
  * Turns coordinates into a city, state and postal code using
@@ -68,11 +70,22 @@ function geolocationMessage(error: GeolocationPositionError) {
  * lookup is sometimes wrong about which town a suburb belongs to.
  *
  * Shared by the owner profile and the clinic profile, which is why the
- * field names are fixed.
+ * field names are fixed. A clinic also gets the coordinates as visible
+ * fields (`manualCoordinates`): whoever is filling the form in is often
+ * not standing in the clinic, and can copy the pair from a map instead.
  */
 export default function LocationFields({
   defaults,
+  precision = "area",
+  buttonLabel = "Use my current location",
+  manualCoordinates = false,
+  hint,
 }: {
+  precision?: keyof typeof DECIMALS;
+  buttonLabel?: string;
+  manualCoordinates?: boolean;
+  /** One line under the controls saying what the location is for. */
+  hint: React.ReactNode;
   defaults: {
     city: string | null;
     state: string | null;
@@ -86,11 +99,11 @@ export default function LocationFields({
     state: defaults.state ?? "",
     postalCode: defaults.postalCode ?? "",
   });
-  const [coords, setCoords] = useState(
-    defaults.latitude != null && defaults.longitude != null
-      ? { latitude: String(defaults.latitude), longitude: String(defaults.longitude) }
-      : null,
-  );
+  const [coords, setCoords] = useState({
+    latitude: defaults.latitude != null ? String(defaults.latitude) : "",
+    longitude: defaults.longitude != null ? String(defaults.longitude) : "",
+  });
+  const hasCoords = coords.latitude !== "" && coords.longitude !== "";
   const [status, setStatus] = useState<Status>({ phase: "idle" });
   const locating = status.phase === "locating";
 
@@ -107,8 +120,8 @@ export default function LocationFields({
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const latitude = coarse(position.coords.latitude);
-        const longitude = coarse(position.coords.longitude);
+        const latitude = position.coords.latitude.toFixed(DECIMALS[precision]);
+        const longitude = position.coords.longitude.toFixed(DECIMALS[precision]);
         setCoords({ latitude, longitude });
 
         try {
@@ -133,8 +146,12 @@ export default function LocationFields({
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      <input type="hidden" name="latitude" value={coords?.latitude ?? ""} />
-      <input type="hidden" name="longitude" value={coords?.longitude ?? ""} />
+      {!manualCoordinates && (
+        <>
+          <input type="hidden" name="latitude" value={coords.latitude} />
+          <input type="hidden" name="longitude" value={coords.longitude} />
+        </>
+      )}
 
       <div>
         <label className={label} htmlFor="city">City</label>
@@ -182,16 +199,16 @@ export default function LocationFields({
             aria-busy={locating}
             className="rounded-md border border-mist-deep px-3 py-1.5 text-sm text-navy-700 hover:text-navy-900 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {locating ? "Finding your location..." : "Use my current location"}
+            {locating ? "Finding your location..." : buttonLabel}
           </button>
 
           <p role="status" className="text-sm text-ink-soft">
-            {coords ? (
+            {hasCoords ? (
               <>
                 Location set ({coords.latitude}, {coords.longitude}).{" "}
                 <button
                   type="button"
-                  onClick={() => setCoords(null)}
+                  onClick={() => setCoords({ latitude: "", longitude: "" })}
                   className="text-navy-700 underline hover:text-navy-900"
                 >
                   Clear
@@ -203,16 +220,42 @@ export default function LocationFields({
           </p>
         </div>
 
+        {manualCoordinates && (
+          <div className="mt-4 grid max-w-sm grid-cols-2 gap-4">
+            <div>
+              <label className={label} htmlFor="latitude">Latitude</label>
+              <input
+                id="latitude"
+                name="latitude"
+                className={field}
+                value={coords.latitude}
+                onChange={(e) => setCoords((c) => ({ ...c, latitude: e.target.value }))}
+                inputMode="decimal"
+                placeholder="12.97160"
+              />
+            </div>
+            <div>
+              <label className={label} htmlFor="longitude">Longitude</label>
+              <input
+                id="longitude"
+                name="longitude"
+                className={field}
+                value={coords.longitude}
+                onChange={(e) => setCoords((c) => ({ ...c, longitude: e.target.value }))}
+                inputMode="decimal"
+                placeholder="77.59460"
+              />
+            </div>
+          </div>
+        )}
+
         {status.phase === "error" && (
           <p role="alert" className="mt-2 text-sm text-red-900">
             {status.message}
           </p>
         )}
 
-        <p className="mt-2 text-xs text-ink-soft">
-          Used to suggest vets near you. Your position is rounded to about 100 m,
-          and looked up with OpenStreetMap to fill in the city. Save to keep it.
-        </p>
+        <p className="mt-2 text-xs text-ink-soft">{hint}</p>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { fail, ok, type ActionState } from "@/lib/action-result";
 import { parseImageField } from "@/lib/upload-rules";
+import { parseCoordinates } from "@/lib/geo";
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -30,8 +31,6 @@ export async function updateProfile(
   const city = text(formData, "city");
   const state = text(formData, "state");
   const postalCode = text(formData, "postalCode");
-  const latitudeRaw = text(formData, "latitude");
-  const longitudeRaw = text(formData, "longitude");
 
   if (name.length > 80) return fail("That name is too long.");
 
@@ -56,21 +55,9 @@ export async function updateProfile(
   if (city.length > 80 || state.length > 80) return fail("That place name is too long.");
   if (postalCode.length > 12) return fail("That postal code is too long.");
 
-  // Coordinates come as a pair or not at all; half a position is no use
-  // to anything that measures distance.
-  let latitude: number | null = null;
-  let longitude: number | null = null;
-  if (latitudeRaw || longitudeRaw) {
-    latitude = Number(latitudeRaw);
-    longitude = Number(longitudeRaw);
-    const valid =
-      latitudeRaw !== "" &&
-      longitudeRaw !== "" &&
-      Number.isFinite(latitude) &&
-      Number.isFinite(longitude) &&
-      Math.abs(latitude) <= 90 &&
-      Math.abs(longitude) <= 180;
-    if (!valid) return fail("That location could not be read. Try setting it again.");
+  const coordinates = parseCoordinates(formData);
+  if (coordinates === false) {
+    return fail("That location could not be read. Try setting it again.");
   }
 
   await prisma.user.update({
@@ -84,8 +71,8 @@ export async function updateProfile(
       city: city || null,
       state: state || null,
       postalCode: postalCode || null,
-      latitude,
-      longitude,
+      latitude: coordinates?.latitude ?? null,
+      longitude: coordinates?.longitude ?? null,
     },
   });
 
