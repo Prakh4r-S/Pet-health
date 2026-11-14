@@ -15,7 +15,7 @@ const steps = [
   },
   {
     title: "Book a vet",
-    body: "Pick a time that suits you from a vet's own calendar, or ask to be matched with whoever is free soonest.",
+    body: "Pick a time that suits you from a vet's own calendar, or ask for the earliest opening with any vet in the next 24 hours.",
   },
   {
     title: "Meet over video",

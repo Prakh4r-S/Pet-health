@@ -2,6 +2,34 @@
 
 import { getCurrentUser } from "@/lib/current-user";
 import { buildOwnerContext } from "@/lib/pet-context";
+import {
+  MAX_HISTORY_TURNS,
+  MAX_QUESTION_CHARS,
+  MAX_TURN_CHARS,
+} from "@/lib/assistant-limits";
+
+/**
+ * The part of the conversation that is forwarded to the model.
+ *
+ * History comes from the browser, so it is treated as input: only the
+ * last few turns, only the two roles that exist, and each one cut to a
+ * fixed length. The browser trims too, but that is a courtesy — this is
+ * the limit.
+ */
+function boundedHistory(history: unknown): ChatTurn[] {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .filter(
+      (turn): turn is ChatTurn =>
+        typeof turn === "object" &&
+        turn !== null &&
+        (turn.role === "user" || turn.role === "assistant") &&
+        typeof turn.content === "string",
+    )
+    .slice(-MAX_HISTORY_TURNS)
+    .map((turn) => ({ role: turn.role, content: turn.content.slice(0, MAX_TURN_CHARS) }));
+}
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
 
@@ -20,7 +48,7 @@ export async function askAssistant(
   const user = await getCurrentUser();
 
   if (!question.trim()) return { error: "Ask something first." };
-  if (question.length > 1000) return { error: "That question is too long." };
+  if (question.length > MAX_QUESTION_CHARS) return { error: "That question is too long." };
 
   const serviceUrl = process.env.TRANSCRIPTION_SERVICE_URL;
   const serviceKey = process.env.TRANSCRIPTION_SERVICE_KEY;
@@ -50,7 +78,7 @@ export async function askAssistant(
       body: JSON.stringify({
         question,
         context,
-        history: history.slice(-6),
+        history: boundedHistory(history),
       }),
     });
 

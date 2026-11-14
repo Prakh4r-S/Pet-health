@@ -41,10 +41,10 @@ export default function NotesPanel({ appointmentId }: { appointmentId: string })
   }, [value, appointmentId]);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
+    <div className="rounded-lg border border-mist bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-medium">Notes</h3>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-bark-faint">
           {status === "saving" ? "Saving..." : status === "saved" ? "Saved" : ""}
         </span>
       </div>
@@ -57,7 +57,7 @@ export default function NotesPanel({ appointmentId }: { appointmentId: string })
         }}
         rows={6}
         placeholder="Observations during the call — you'll write these up properly afterwards."
-        className="w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm"
+        className="w-full resize-y rounded-md border border-mist-deep px-3 py-2 text-sm"
       />
     </div>
   );

@@ -223,7 +223,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
   ).padStart(2, "0")}`;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
+    <div className="rounded-lg border border-mist bg-white p-3">
       <div className="flex flex-wrap items-center gap-3">
         {state === "idle" || state === "error" ? (
           <button
@@ -242,24 +242,24 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
             <button
               type="button"
               onClick={() => void stop()}
-              className="rounded-md bg-gray-100 px-3 py-1.5 text-sm hover:bg-gray-200"
+              className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-pine-100"
             >
               Stop and save
             </button>
           </>
         ) : (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-bark-soft">
             {state === "uploading" ? `Uploading ${Math.round(progress)}%` : "Saved"}
           </span>
         )}
 
         {state === "idle" && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-bark-soft">
             Tell the owner before you start.
           </span>
         )}
         {state === "recording" && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-bark-soft">
             Saved when you stop or leave the call. Keep this tab open until then.
           </span>
         )}
@@ -268,7 +268,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
       {message && (
         <p
           role={state === "error" ? "alert" : "status"}
-          className={`mt-2 text-xs ${state === "error" ? "text-red-700" : "text-gray-600"}`}
+          className={`mt-2 text-xs ${state === "error" ? "text-red-700" : "text-bark-soft"}`}
         >
           {message}
         </p>

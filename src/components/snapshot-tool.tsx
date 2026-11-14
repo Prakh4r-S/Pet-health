@@ -21,7 +21,7 @@ function SnapshotStrip({ snapshots }: { snapshots: SavedSnapshot[] }) {
 
   return (
     <div className="mt-2">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-bark-soft">
         Saved this consultation ({snapshots.length})
       </p>
       <ul className="mt-1 flex flex-wrap gap-2">
@@ -31,11 +31,11 @@ function SnapshotStrip({ snapshots }: { snapshots: SavedSnapshot[] }) {
               href={`/api/documents/${s.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block max-w-48 truncate rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs hover:border-gray-400"
+              className="block max-w-48 truncate rounded-md border border-mist bg-white px-2.5 py-1 text-xs hover:border-pine-500"
               title={s.title}
             >
               {s.title}
-              <span className="ml-1.5 text-gray-400">
+              <span className="ml-1.5 text-bark-faint">
                 {new Date(s.takenAt).toLocaleTimeString(undefined, {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -227,16 +227,20 @@ export default function SnapshotTool({
 
   if (!captured) {
     return (
-      <div>
-        <div className="flex items-center gap-3">
+      // A card in the row of call tools beneath the video, matching the
+      // recorder and the notepad — not a control floating over the feed.
+      <div className="rounded-lg border border-mist bg-white p-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => void capture()}
-            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
+            className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
           >
             Take snapshot
           </button>
-          {message && <span className="text-xs text-gray-600">{message}</span>}
+          <span className="text-xs text-bark-soft">
+            {message ?? "Captures the owner's camera so you can mark it up."}
+          </span>
         </div>
         <SnapshotStrip snapshots={saved} />
       </div>
@@ -244,8 +248,8 @@ export default function SnapshotTool({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
-      <p className="mb-2 text-xs text-gray-600">
+    <div className="rounded-lg border border-mist bg-white p-3">
+      <p className="mb-2 text-xs text-bark-soft">
         Draw on the image to mark anything worth noting.
       </p>
       <canvas
@@ -257,7 +261,7 @@ export default function SnapshotTool({
         onPointerMove={onPointerMove}
         onPointerUp={() => setDrawing(false)}
         onPointerLeave={() => setDrawing(false)}
-        className="w-full cursor-crosshair rounded-md border border-gray-200 touch-none"
+        className="w-full cursor-crosshair rounded-md border border-mist touch-none"
       />
       <SnapshotControls
         saving={saving}
@@ -272,7 +276,7 @@ export default function SnapshotTool({
         }}
         onSave={save}
       />
-      {message && <p className="mt-2 text-xs text-gray-600">{message}</p>}
+      {message && <p className="mt-2 text-xs text-bark-soft">{message}</p>}
       <SnapshotStrip snapshots={saved} />
     </div>
   );
@@ -297,19 +301,19 @@ function SnapshotControls({
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="What does this show?"
-        className="min-w-40 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        className="min-w-40 flex-1 rounded-md border border-mist-deep px-3 py-1.5 text-sm"
       />
       <button
         type="button"
         onClick={onUndo}
-        className="rounded-md bg-gray-100 px-3 py-1.5 text-sm hover:bg-gray-200"
+        className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-pine-100"
       >
         Undo
       </button>
       <button
         type="button"
         onClick={onDiscard}
-        className="rounded-md bg-gray-100 px-3 py-1.5 text-sm hover:bg-gray-200"
+        className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-pine-100"
       >
         Discard
       </button>
@@ -317,7 +321,7 @@ function SnapshotControls({
         type="button"
         disabled={saving}
         onClick={() => onSave(note)}
-        className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
+        className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700 disabled:opacity-60"
       >
         {saving ? "Saving..." : "Save to record"}
       </button>

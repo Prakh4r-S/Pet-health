@@ -15,8 +15,8 @@ export default async function AssistantPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Ask about your pets</h1>
-        <Link href="/pets" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl text-pine-900">Ask about your pets</h1>
+        <Link href="/pets" className="text-sm text-bark-soft hover:underline">
           Your pets
         </Link>
       </div>

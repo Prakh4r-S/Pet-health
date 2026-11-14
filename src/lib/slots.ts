@@ -102,8 +102,11 @@ function isDuringTimeOff(
 }
 
 /**
- * Vets who could take an appointment starting now, for the instant-match
+ * Vets with an open slot in the next 24 hours, for the instant-match
  * path. Returns the soonest slot for each, soonest first.
+ *
+ * "Now" in the name is aspirational: the soonest slot may be hours away,
+ * and the interface says "in the next 24 hours" accordingly.
  */
 export async function findVetsAvailableNow(specialisationSlug?: string) {
   const vets = await prisma.vetProfile.findMany({

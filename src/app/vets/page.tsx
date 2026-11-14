@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { findVetsAvailableNow } from "@/lib/slots";
 import InstantMatch from "@/components/instant-match";
 
-const card = "rounded-lg border border-gray-200 p-5 hover:border-gray-400";
+const card = "rounded-lg border border-mist p-5 hover:border-pine-500";
 
 export default async function VetsPage({
   searchParams,
@@ -39,8 +39,8 @@ export default async function VetsPage({
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Find a vet</h1>
-        <Link href="/appointments" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl text-pine-900">Find a vet</h1>
+        <Link href="/appointments" className="text-sm text-bark-soft hover:underline">
           Your appointments
         </Link>
       </div>
@@ -55,7 +55,7 @@ export default async function VetsPage({
         <Link
           href="/vets"
           className={`rounded-full px-3 py-1 text-sm ${
-            !specialisation ? "bg-pine-900 text-white" : "bg-gray-100 hover:bg-gray-200"
+            !specialisation ? "bg-pine-900 text-white" : "bg-mist hover:bg-pine-100"
           }`}
         >
           All
@@ -67,7 +67,7 @@ export default async function VetsPage({
             className={`rounded-full px-3 py-1 text-sm ${
               specialisation === s.slug
                 ? "bg-pine-900 text-white"
-                : "bg-gray-100 hover:bg-gray-200"
+                : "bg-mist hover:bg-pine-100"
             }`}
           >
             {s.name}
@@ -76,7 +76,7 @@ export default async function VetsPage({
       </div>
 
       {vets.length === 0 ? (
-        <p className="rounded-md border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+        <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-bark-soft">
           No vets available{specialisation && " in this specialisation"}.
         </p>
       ) : (
@@ -85,13 +85,13 @@ export default async function VetsPage({
             <li key={vet.id}>
               <Link href={`/vets/${vet.id}`} className={`block ${card}`}>
                 <p className="font-medium">{vet.user.name ?? "Vet"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-bark-soft">
                   {vet.clinicName ?? "Independent"}
                   {vet.city && ` · ${vet.city}`}
                   {vet.yearsExperience != null && ` · ${vet.yearsExperience} yrs`}
                 </p>
                 {vet.specialisations.length > 0 && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-bark-soft">
                     {vet.specialisations.map((s) => s.name).join(" · ")}
                   </p>
                 )}

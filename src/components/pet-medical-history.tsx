@@ -8,14 +8,14 @@ import {
   resolveCondition,
 } from "@/app/pets/[id]/actions";
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const label = "mb-1 block text-xs text-gray-600";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
+const label = "mb-1 block text-xs text-bark-soft";
 const textButton = "text-xs hover:underline";
 
 const severityStyles: Record<string, { text: string; className: string }> = {
   SEVERE: { text: "severe", className: "bg-red-100 text-red-800" },
   MODERATE: { text: "moderate", className: "bg-amber-100 text-amber-800" },
-  MILD: { text: "mild", className: "bg-gray-100 text-gray-700" },
+  MILD: { text: "mild", className: "bg-mist text-bark" },
 };
 
 export type AllergyRow = {
@@ -52,14 +52,14 @@ export default function PetMedicalHistory({
   conditions: ConditionRow[];
 }) {
   return (
-    <section className="mb-6 rounded-lg border border-gray-200 p-5">
+    <section className="mb-6 rounded-lg border border-mist p-5">
       <h2 className="mb-4 font-medium">Medical history</h2>
 
       <h3 className="text-sm font-medium">Allergies</h3>
       {allergies.length === 0 ? (
-        <p className="mt-1 text-sm text-gray-400">None recorded.</p>
+        <p className="mt-1 text-sm text-bark-faint">None recorded.</p>
       ) : (
-        <ul className="mt-1 divide-y divide-gray-100">
+        <ul className="mt-1 divide-y divide-mist">
           {allergies.map((a) => {
             const severity = severityStyles[a.severity];
             return (
@@ -71,7 +71,7 @@ export default function PetMedicalHistory({
                       {severity.text}
                     </span>
                   )}
-                  {a.reaction && <p className="text-xs text-gray-600">{a.reaction}</p>}
+                  {a.reaction && <p className="text-xs text-bark-soft">{a.reaction}</p>}
                 </div>
                 {canEdit && (
                   <ActionForm
@@ -140,18 +140,18 @@ export default function PetMedicalHistory({
 
       <h3 className="mt-6 text-sm font-medium">Conditions</h3>
       {conditions.length === 0 ? (
-        <p className="mt-1 text-sm text-gray-400">None recorded.</p>
+        <p className="mt-1 text-sm text-bark-faint">None recorded.</p>
       ) : (
-        <ul className="mt-1 divide-y divide-gray-100">
+        <ul className="mt-1 divide-y divide-mist">
           {conditions.map((c) => (
             <li key={c.id} className="flex items-start justify-between gap-4 py-2.5">
               <div className="text-sm">
                 <span className="font-medium">{c.name}</span>
-                <span className="text-gray-500">
+                <span className="text-bark-soft">
                   {c.resolvedOn ? ` · resolved ${c.resolvedOn}` : " · ongoing"}
                   {c.diagnosedOn && ` · diagnosed ${c.diagnosedOn}`}
                 </span>
-                {c.notes && <p className="whitespace-pre-wrap text-xs text-gray-600">{c.notes}</p>}
+                {c.notes && <p className="whitespace-pre-wrap text-xs text-bark-soft">{c.notes}</p>}
               </div>
               {canEdit && (
                 <div className="flex shrink-0 flex-col items-end gap-1">

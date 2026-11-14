@@ -48,41 +48,53 @@ export default function ConsultationWorkspace({
         video
         audio
         onDisconnected={() => router.push(onLeaveHref)}
-        data-lk-theme="default"
       >
-        <div className="flex gap-3">
-          <div className="min-w-0 flex-1">
-            <div
-              className="overflow-hidden rounded-lg"
-              style={{ height: "560px" }}
-            >
-              <VideoConference />
-            </div>
-
-            {isVet && patient && (
-              <div className="mt-3 grid gap-3">
-                <SnapshotTool appointmentId={appointmentId} petId={patient.id} />
-                <CallRecorder appointmentId={appointmentId} />
-                <NotesPanel appointmentId={appointmentId} />
-              </div>
-            )}
+        {/* One column on phones and tablets, two from 1024px.
+            Source order is video, records, tools: stacked, that puts the
+            patient's records directly under the call rather than below
+            the notepad. On wide screens the grid lifts the records into
+            a side column spanning both rows. */}
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          {/* LiveKit's theme is dark and sets a light text colour on
+              everything beneath it. Scoped to the video alone: applied
+              to the whole room it turned the records panel and the
+              tools below into white text on white cards. */}
+          <div
+            data-lk-theme="default"
+            className="h-[60vh] min-h-80 overflow-hidden rounded-lg lg:col-start-1 lg:h-[560px]"
+          >
+            <VideoConference />
           </div>
 
           {patient && (
-            <aside className="hidden w-80 shrink-0 lg:block">
+            <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
               <button
                 type="button"
                 onClick={() => setPanelOpen((v) => !v)}
-                className="mb-2 w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
+                aria-expanded={panelOpen}
+                aria-controls="patient-records"
+                className="flex w-full items-center justify-between rounded-md border border-mist bg-white px-3 py-2 text-sm font-medium hover:bg-pine-50"
               >
-                {panelOpen ? "Hide records" : "Patient records"}
+                <span>Patient records · {patient.name}</span>
+                <span className="text-bark-soft">{panelOpen ? "Hide" : "Show"}</span>
               </button>
               {panelOpen && (
-                <div className="h-[512px] overflow-hidden rounded-lg border border-gray-200">
+                <div
+                  id="patient-records"
+                  className="mt-2 max-h-[70vh] overflow-y-auto rounded-lg border border-mist lg:h-[512px] lg:max-h-none"
+                >
                   <PatientPanel patient={patient} />
                 </div>
               )}
             </aside>
+          )}
+
+          {isVet && patient && (
+            <div className="grid gap-3 lg:col-start-1">
+              <SnapshotTool appointmentId={appointmentId} petId={patient.id} />
+              <CallRecorder appointmentId={appointmentId} />
+              <NotesPanel appointmentId={appointmentId} />
+            </div>
           )}
         </div>
       </LiveKitRoom>

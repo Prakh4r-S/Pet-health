@@ -68,13 +68,13 @@ export default async function ConsultationReviewPage({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
-      <Link href="/vet/appointments" className="text-sm text-gray-500 hover:underline">
+      <Link href="/vet/appointments" className="text-sm text-bark-soft hover:underline">
         Back to schedule
       </Link>
 
       <header className="mb-6 mt-3">
-        <h1 className="text-2xl font-semibold">{appointment.pet.name}</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-2xl text-pine-900">{appointment.pet.name}</h1>
+        <p className="text-sm text-bark-soft">
           Consultation on{" "}
           <LocalTime date={appointment.startsAt.toISOString()} format="dayTime" />
           {appointment.owner.name && ` · owner: ${appointment.owner.name}`}
@@ -84,16 +84,16 @@ export default async function ConsultationReviewPage({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="grid gap-6">
-          <section className="rounded-lg border border-gray-200 p-5">
+          <section className="rounded-lg border border-mist p-5">
             <h2 className="mb-4 font-medium">From this consultation</h2>
             {appointment.documents.length === 0 ? (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-bark-faint">
                 No snapshots or documents were captured during this call.
               </p>
             ) : (
               <ul className="grid gap-3 sm:grid-cols-2">
                 {appointment.documents.map((d) => (
-                  <li key={d.id} className="rounded-md border border-gray-100 p-3">
+                  <li key={d.id} className="rounded-md border border-mist p-3">
                     <a
                       href={`/api/documents/${d.id}`}
                       target="_blank"
@@ -102,12 +102,12 @@ export default async function ConsultationReviewPage({
                     >
                       {d.title}
                     </a>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-bark-soft">
                       {kindLabels[d.kind] ?? d.kind}
                       {" · "}
                       <LocalTime date={d.createdAt.toISOString()} format="time" />
                     </p>
-                    {d.note && <p className="mt-1 text-xs text-gray-600">{d.note}</p>}
+                    {d.note && <p className="mt-1 text-xs text-bark-soft">{d.note}</p>}
                   </li>
                 ))}
               </ul>
@@ -161,7 +161,7 @@ export default async function ConsultationReviewPage({
           />
         </div>
 
-        <aside className="h-fit overflow-hidden rounded-lg border border-gray-200">
+        <aside className="h-fit overflow-hidden rounded-lg border border-mist">
           <PatientPanel patient={patient} />
         </aside>
       </div>

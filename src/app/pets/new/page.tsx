@@ -22,10 +22,10 @@ export default async function NewPetPage() {
 
   return (
     <main className="mx-auto max-w-xl px-6 py-10">
-      <Link href="/pets" className="text-sm text-gray-500 hover:underline">
+      <Link href="/pets" className="text-sm text-bark-soft hover:underline">
         Back to pets
       </Link>
-      <h1 className="mb-8 mt-3 text-2xl font-semibold">Add a pet</h1>
+      <h1 className="mb-8 mt-3 text-2xl text-pine-900">Add a pet</h1>
       <PetForm species={species} />
     </main>
   );

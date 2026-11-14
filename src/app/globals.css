@@ -12,28 +12,42 @@
 
   --color-bark: #22201d;
   --color-bark-soft: #5b5751;
+  /* Placeholder and "nothing here yet" text: present, but not competing. */
+  --color-bark-faint: #8b867e;
   --color-mist: #eef1ee;
+  /* Mist is right for dividers and card edges but too faint to mark out
+     something you are meant to type into. */
+  --color-mist-deep: #cbd5cf;
 
   --font-display: var(--font-newsreader), Georgia, serif;
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-html {
-  -webkit-font-smoothing: antialiased;
-}
+/* Element defaults live in the base layer so that a utility class on the
+   element can override them. Written outside any layer they outrank
+   every utility: `font-medium` on a heading, or `font-sans` on a small
+   label that happens to be an <h3>, would silently do nothing. */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  background: white;
-  color: var(--color-bark);
-  font-family: var(--font-sans);
-}
+  body {
+    background: white;
+    color: var(--color-bark);
+    font-family: var(--font-sans);
+  }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  /* Newsreader is loaded at 400 and 500 only. Headings may be set to
+     font-medium; anything heavier would be synthesised by the browser,
+     which smears a text serif. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
 }
 
 /* Keyboard focus stays visible everywhere. The default outline is

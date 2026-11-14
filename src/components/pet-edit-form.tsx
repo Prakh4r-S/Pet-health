@@ -2,8 +2,8 @@ import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 import { archivePet, updatePet } from "@/app/pets/[id]/actions";
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const label = "mb-1 block text-xs text-gray-600";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
+const label = "mb-1 block text-xs text-bark-soft";
 
 export type EditablePet = {
   id: string;
@@ -34,12 +34,12 @@ export default function PetEditForm({
   breeds: { id: string; name: string }[];
 }) {
   return (
-    <details className="group mb-6 rounded-lg border border-gray-200">
+    <details className="group mb-6 rounded-lg border border-mist">
       <summary className="cursor-pointer select-none px-5 py-3 text-sm font-medium text-pine-700 hover:text-pine-900">
         Edit details
       </summary>
 
-      <div className="border-t border-gray-100 p-5">
+      <div className="border-t border-mist p-5">
         <ActionForm
           action={updatePet}
           resetOnSuccess={false}
@@ -104,7 +104,7 @@ export default function PetEditForm({
               className={field}
               defaultValue={pet.birthDate ?? ""}
             />
-            <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+            <label className="mt-2 flex items-center gap-2 text-xs text-bark-soft">
               <input
                 type="checkbox"
                 name="birthDateIsApprox"
@@ -145,9 +145,9 @@ export default function PetEditForm({
           </div>
         </ActionForm>
 
-        <div className="mt-6 border-t border-gray-100 pt-5">
+        <div className="mt-6 border-t border-mist pt-5">
           <h3 className="text-sm font-medium">Archive {pet.name}</h3>
-          <p className="mt-1 text-xs text-gray-600">
+          <p className="mt-1 text-xs text-bark-soft">
             Removes {pet.name} from your list. Consultation records are kept, but
             you won&apos;t be able to open this page or book appointments for{" "}
             {pet.name} afterwards.

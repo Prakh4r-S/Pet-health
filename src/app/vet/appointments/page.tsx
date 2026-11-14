@@ -21,10 +21,10 @@ function recordStatus(
 ): { text: string; className: string } {
   if (status === "CANCELLED") return { text: "Cancelled", className: "bg-red-50 text-red-700" };
   if (note?.status === "FINALISED") {
-    return { text: "Record finalised", className: "bg-green-100 text-green-800" };
+    return { text: "Record finalised", className: "bg-pine-100 text-pine-900" };
   }
   if (note) return { text: "Draft record", className: "bg-amber-100 text-amber-800" };
-  return { text: "No record yet", className: "bg-gray-100 text-gray-700" };
+  return { text: "No record yet", className: "bg-mist text-bark" };
 }
 
 export default async function VetAppointmentsPage() {
@@ -65,14 +65,14 @@ export default async function VetAppointmentsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Your schedule</h1>
-        <Link href="/vet/availability" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl text-pine-900">Your schedule</h1>
+        <Link href="/vet/availability" className="text-sm text-bark-soft hover:underline">
           Availability
         </Link>
       </div>
 
       {current.length === 0 ? (
-        <p className="rounded-md border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+        <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-bark-soft">
           No upcoming appointments.
         </p>
       ) : (
@@ -85,23 +85,23 @@ export default async function VetAppointmentsPage() {
             return (
               <li
                 key={a.id}
-                className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 p-4"
+                className="flex items-start justify-between gap-4 rounded-lg border border-mist p-4"
               >
                 <div>
                   <p className="font-medium">
                     <LocalTime date={a.startsAt.toISOString()} />
                     {started && (
-                      <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-normal text-green-800">
+                      <span className="ml-2 rounded-full bg-pine-100 px-2 py-0.5 text-xs font-normal text-pine-900">
                         In progress
                       </span>
                     )}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-bark-soft">
                     {a.pet.name} · {a.pet.species.name}
                     {a.pet.breed && ` · ${a.pet.breed.name}`}
                   </p>
-                  <p className="text-xs text-gray-500">Owner: {a.pet.owner.name ?? "—"}</p>
-                  {a.reason && <p className="mt-2 text-sm text-gray-700">{a.reason}</p>}
+                  <p className="text-xs text-bark-soft">Owner: {a.pet.owner.name ?? "—"}</p>
+                  {a.reason && <p className="mt-2 text-sm text-bark">{a.reason}</p>}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   {open ? (
@@ -112,13 +112,13 @@ export default async function VetAppointmentsPage() {
                       Join call
                     </Link>
                   ) : (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-bark-soft">
                       Call opens {JOIN_WINDOW_BEFORE_MINUTES} minutes before
                     </span>
                   )}
                   <Link
                     href={`/appointments/${a.id}/review`}
-                    className="text-sm text-gray-600 hover:underline"
+                    className="text-sm text-bark-soft hover:underline"
                   >
                     Review
                   </Link>
@@ -145,10 +145,10 @@ export default async function VetAppointmentsPage() {
       )}
 
       <section className="mt-10">
-        <h2 className="mb-3 text-sm font-medium text-gray-500">Past consultations</h2>
+        <h2 className="mb-3 text-sm font-medium text-bark-soft">Past consultations</h2>
 
         {past.length === 0 ? (
-          <p className="text-sm text-gray-400">None yet.</p>
+          <p className="text-sm text-bark-faint">None yet.</p>
         ) : (
           <ul className="grid gap-2">
             {past.map((a) => {
@@ -159,18 +159,18 @@ export default async function VetAppointmentsPage() {
               return (
                 <li
                   key={a.id}
-                  className="flex items-start justify-between gap-4 rounded-md border border-gray-100 p-3"
+                  className="flex items-start justify-between gap-4 rounded-md border border-mist p-3"
                 >
                   <div className="text-sm">
                     <p>
-                      <span className="text-gray-500">
+                      <span className="text-bark-soft">
                         <LocalTime date={a.startsAt.toISOString()} />
                       </span>
                       {" · "}
                       {a.pet.name} · {a.pet.species.name}
                     </p>
-                    <p className="text-xs text-gray-500">Owner: {a.pet.owner.name ?? "—"}</p>
-                    {a.reason && <p className="mt-0.5 text-xs text-gray-500">{a.reason}</p>}
+                    <p className="text-xs text-bark-soft">Owner: {a.pet.owner.name ?? "—"}</p>
+                    {a.reason && <p className="mt-0.5 text-xs text-bark-soft">{a.reason}</p>}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-xs ${record.className}`}>
@@ -193,7 +193,7 @@ export default async function VetAppointmentsPage() {
           </ul>
         )}
         {past.length === PAST_LIMIT && (
-          <p className="mt-3 text-xs text-gray-500">Showing the {PAST_LIMIT} most recent.</p>
+          <p className="mt-3 text-xs text-bark-soft">Showing the {PAST_LIMIT} most recent.</p>
         )}
       </section>
     </main>

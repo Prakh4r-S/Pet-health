@@ -86,7 +86,7 @@ export async function bookInstantMatch(
 
   const candidates = await findVetsAvailableNow(specialisationSlug);
   if (candidates.length === 0) {
-    return fail("No vets are available right now. Try booking a specific time.");
+    return fail("No vets have an opening in the next 24 hours. Try booking a specific time.");
   }
 
   // Walk the candidates in order rather than committing to the first.
