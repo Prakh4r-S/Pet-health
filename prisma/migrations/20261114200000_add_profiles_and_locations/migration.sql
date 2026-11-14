@@ -1,23 +1,26 @@
+-- Every column is added only if it is missing, so this migration can be
+-- applied to a database that already received some or all of these
+-- columns from `prisma db push`.
 
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "age" INTEGER,
-ADD COLUMN     "avatarUrl" TEXT,
-ADD COLUMN     "bio" TEXT,
-ADD COLUMN     "city" TEXT,
-ADD COLUMN     "latitude" DOUBLE PRECISION,
-ADD COLUMN     "longitude" DOUBLE PRECISION,
-ADD COLUMN     "phone" TEXT,
-ADD COLUMN     "postalCode" TEXT,
-ADD COLUMN     "state" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "age" INTEGER,
+ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "bio" TEXT,
+ADD COLUMN IF NOT EXISTS "city" TEXT,
+ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "phone" TEXT,
+ADD COLUMN IF NOT EXISTS "postalCode" TEXT,
+ADD COLUMN IF NOT EXISTS "state" TEXT;
 
 -- AlterTable
-ALTER TABLE "VetProfile" ADD COLUMN     "avatarUrl" TEXT,
-ADD COLUMN     "clinicAddress" TEXT,
-ADD COLUMN     "clinicImageUrl" TEXT,
-ADD COLUMN     "consultationFee" INTEGER,
-ADD COLUMN     "latitude" DOUBLE PRECISION,
-ADD COLUMN     "longitude" DOUBLE PRECISION,
-ADD COLUMN     "postalCode" TEXT,
-ADD COLUMN     "specialties" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "state" TEXT;
+ALTER TABLE "VetProfile" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "clinicAddress" TEXT,
+ADD COLUMN IF NOT EXISTS "clinicImageUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "consultationFee" INTEGER,
+ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "postalCode" TEXT,
+ADD COLUMN IF NOT EXISTS "specialties" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "state" TEXT;
 
