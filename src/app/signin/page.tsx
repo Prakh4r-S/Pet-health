@@ -48,8 +48,8 @@ export default async function SignInPage({
       <Image
         src="/logo.webp"
         alt="Max Petcare"
-        width={800}
-        height={927}
+        width={683}
+        height={800}
         priority
         className="mx-auto mb-6 h-auto w-48"
       />

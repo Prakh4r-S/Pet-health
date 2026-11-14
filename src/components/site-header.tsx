@@ -40,7 +40,7 @@ export default async function SiteHeader() {
               the lettering would be unreadable, so the name is set as
               text beside it. Decorative here — the link is named by that
               text. */}
-          <Image src="/logo-mark.png" alt="" width={36} height={36} priority />
+          <Image src="/logo-mark.png" alt="" width={40} height={40} priority />
           Max Petcare
         </Link>
 
