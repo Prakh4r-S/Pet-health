@@ -1,8 +1,10 @@
 import { upload } from "@vercel/blob/client";
 import {
   documentPrefix,
+  imagePrefix,
   recordingPrefix,
   safeFilename,
+  type ImageUploadRequest,
   type UploadRequest,
 } from "@/lib/upload-rules";
 
@@ -21,7 +23,7 @@ export async function uploadDirect(params: {
   file: Blob;
   filename: string;
   contentType: string;
-  request: UploadRequest;
+  request: Exclude<UploadRequest, ImageUploadRequest>;
   onProgress?: (percentage: number) => void;
 }): Promise<string> {
   const { file, filename, contentType, request, onProgress } = params;
@@ -41,4 +43,31 @@ export async function uploadDirect(params: {
   });
 
   return blob.pathname;
+}
+
+/**
+ * Sends a photo to the public blob store and returns its URL.
+ *
+ * Unlike a document, a photo is meant to be seen by other people — a vet
+ * listing shows it to anyone browsing — so it is stored publicly and
+ * referred to by URL rather than by a pathname that needs signing.
+ */
+export async function uploadImage(params: {
+  file: File;
+  request: ImageUploadRequest;
+  onProgress?: (percentage: number) => void;
+  abortSignal?: AbortSignal;
+}): Promise<string> {
+  const { file, request, onProgress, abortSignal } = params;
+
+  const blob = await upload(`${imagePrefix(request)}${safeFilename(file.name)}`, file, {
+    access: "public",
+    handleUploadUrl: "/api/upload",
+    clientPayload: JSON.stringify(request),
+    contentType: file.type,
+    onUploadProgress: onProgress ? (e) => onProgress(e.percentage) : undefined,
+    abortSignal,
+  });
+
+  return blob.url;
 }
