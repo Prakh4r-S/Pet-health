@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { createVetProfile } from "../actions";
+import { DEFAULT_TIMEZONE, listTimezones } from "@/lib/timezones";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const label = "block text-sm font-medium mb-1";
 
 export default async function VetOnboardingPage() {
@@ -20,11 +21,12 @@ export default async function VetOnboardingPage() {
   const specialisations = await prisma.specialisation.findMany({
     orderBy: { name: "asc" },
   });
+  const timezones = listTimezones();
 
   return (
     <main className="mx-auto max-w-xl px-6 py-10">
-      <h1 className="text-2xl font-semibold">Register as a vet</h1>
-      <p className="mb-8 mt-2 text-sm text-gray-600">
+      <h1 className="text-2xl text-pine-900">Register as a vet</h1>
+      <p className="mb-8 mt-2 text-sm text-bark-soft">
         This adds a practitioner profile to your account. You can still keep your
         own pets&apos; records.
       </p>
@@ -68,6 +70,21 @@ export default async function VetOnboardingPage() {
               <option value="60">60 minutes</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className={label} htmlFor="timezone">Timezone</label>
+          <select id="timezone" name="timezone" className={field} defaultValue={DEFAULT_TIMEZONE}>
+            {timezones.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone.replaceAll("_", " ")}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-bark-soft">
+            Your consulting hours and days off are set in this timezone. Owners
+            see appointment times converted to their own.
+          </p>
         </div>
 
         <fieldset>

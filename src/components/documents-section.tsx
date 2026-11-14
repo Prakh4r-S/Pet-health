@@ -41,13 +41,13 @@ export default function DocumentsSection({
   canUpload: boolean;
 }) {
   return (
-    <section className="rounded-lg border border-gray-200 p-5">
+    <section className="rounded-lg border border-mist p-5">
       <h2 className="mb-4 font-medium">Documents</h2>
 
       {documents.length === 0 ? (
-        <p className="text-sm text-gray-400">Nothing uploaded yet.</p>
+        <p className="text-sm text-bark-faint">Nothing uploaded yet.</p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-mist">
           {documents.map((d) => (
             <li key={d.id} className="flex items-start justify-between gap-4 py-3">
               <div className="min-w-0">
@@ -59,7 +59,7 @@ export default function DocumentsSection({
                 >
                   {d.title}
                 </a>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-bark-soft">
                   {KIND_LABELS[d.kind] ?? d.kind}
                   {" · "}
                   {sizeLabel(d.sizeBytes)}
@@ -67,7 +67,7 @@ export default function DocumentsSection({
                   {d.createdAt}
                   {d.uploadedByName && ` · ${d.uploadedByName}`}
                 </p>
-                {d.note && <p className="mt-1 text-xs text-gray-600">{d.note}</p>}
+                {d.note && <p className="mt-1 text-xs text-bark-soft">{d.note}</p>}
               </div>
               {d.canDelete && (
                 <ActionForm

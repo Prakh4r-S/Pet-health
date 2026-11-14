@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, requireVetProfile } from "@/lib/current-user";
+import { fromZonedTime } from "date-fns-tz";
 import { fail, isUniqueViolation, ok, type ActionState } from "@/lib/action-result";
+import {
+  DEFAULT_TIMEZONE,
+  isCalendarDate,
+  isValidTimezone,
+  nextCalendarDay,
+} from "@/lib/timezones";
 
 export async function createVetProfile(
   _previous: ActionState,
@@ -19,8 +26,12 @@ export async function createVetProfile(
   const yearsRaw = String(formData.get("yearsExperience") ?? "");
   const slotMinutes = Number(formData.get("slotMinutes") ?? 30);
   const specialisationIds = formData.getAll("specialisationIds").map(String);
+  const timezone = String(formData.get("timezone") ?? "") || DEFAULT_TIMEZONE;
 
   if (!licenceNumber) return fail("Licence number is required.");
+  // Availability is stored as wall-clock hours in this zone, so a wrong
+  // or unusable value here would shift every slot the vet ever offers.
+  if (!isValidTimezone(timezone)) return fail("Choose a timezone from the list.");
   if (![15, 20, 30, 45, 60].includes(slotMinutes)) {
     return fail("Choose an appointment length.");
   }
@@ -52,6 +63,7 @@ export async function createVetProfile(
           bio,
           yearsExperience: years,
           slotMinutes,
+          timezone,
           specialisations: { connect: specialisations },
           // Auto-verified for this build. A real product would hold this
           // null until the licence number is checked against a register.
@@ -158,14 +170,25 @@ export async function addTimeOff(
 ): Promise<ActionState> {
   const { profile } = await requireVetProfile();
 
-  const startsAt = new Date(String(formData.get("startsAt") ?? ""));
-  const endsAt = new Date(String(formData.get("endsAt") ?? ""));
+  const from = String(formData.get("startsAt") ?? "");
+  const to = String(formData.get("endsAt") ?? "");
   const reason = String(formData.get("reason") ?? "").trim() || null;
 
-  if (Number.isNaN(startsAt.valueOf()) || Number.isNaN(endsAt.valueOf())) {
-    return fail("Enter both dates.");
-  }
-  if (endsAt <= startsAt) return fail("The end date must be after the start date.");
+  if (!isCalendarDate(from) || !isCalendarDate(to)) return fail("Enter both dates.");
+  // ISO dates sort as text, so this is a date comparison.
+  if (to < from) return fail("The last day can't be before the first day.");
+
+  // The form asks for days, and a day off means the vet's day: midnight
+  // to midnight where they are, not in UTC. For a vet in Kolkata the two
+  // differ by five and a half hours, which is the difference between a
+  // morning clinic being blocked or left open for booking.
+  //
+  // Both days are inclusive — "10th to 10th" is the whole of the 10th —
+  // so the stored end is the start of the day after the last one. Going
+  // through the zone rather than adding 24 hours keeps that right on the
+  // days a clock change makes 23 or 25 hours long.
+  const startsAt = fromZonedTime(`${from}T00:00:00`, profile.timezone);
+  const endsAt = fromZonedTime(`${nextCalendarDay(to)}T00:00:00`, profile.timezone);
 
   await prisma.vetTimeOff.create({
     data: { vetProfileId: profile.id, startsAt, endsAt, reason },

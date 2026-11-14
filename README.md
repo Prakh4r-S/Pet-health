@@ -224,13 +224,22 @@ Requires Node 20+, Python 3.12+, and ffmpeg.
 ```bash
 git clone https://github.com/Prakh4r-S/Pet-health.git
 cd Pet-health
-npm install
+cp .env.example .env         # then fill in the values
+npm install                  # also runs `prisma generate`
+npx prisma generate          # only needed again after editing prisma/schema.prisma
 npx prisma migrate deploy
 npx prisma db seed
 npm run dev
 ```
 
-`.env` needs:
+The Prisma client is generated into `src/generated/prisma`, which is not
+committed. `npm install` generates it; if you see
+`Cannot find module '@/generated/prisma/client'`, run `npx prisma generate`.
+
+`npm run typecheck` and `npm run lint` check the code without building it.
+
+`.env.example` lists every variable with a placeholder and a note on
+where to get it. The required ones:
 
 ```
 DATABASE_URL                 # Neon, pooled
@@ -245,6 +254,9 @@ BLOB_READ_WRITE_TOKEN
 TRANSCRIPTION_SERVICE_URL
 TRANSCRIPTION_SERVICE_KEY
 ```
+
+`TRANSCRIPTION_TIMEOUT_MS` is optional: how long to wait for a transcript,
+default 55000.
 
 The transcription service runs separately — see its repository.
 

@@ -6,7 +6,7 @@ import {
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const smallButton =
   "rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700";
 
@@ -31,6 +31,8 @@ export type Proposal = {
 
 export type RecordingData = {
   status: "UPLOADED" | "TRANSCRIBING" | "TRANSCRIBED" | "FAILED";
+  /** In TRANSCRIBING for long enough that no request can still be behind it. */
+  stalled: boolean;
   durationSeconds: number | null;
   transcript: string | null;
   extraction: Proposal | null;
@@ -56,10 +58,10 @@ function ProposedField({
   if (!value) return null;
 
   return (
-    <ActionForm action={acceptProposedField} className="rounded-md border border-gray-200 p-3">
+    <ActionForm action={acceptProposedField} className="rounded-md border border-mist p-3">
       <input type="hidden" name="appointmentId" value={appointmentId} />
       <input type="hidden" name="field" value={name} />
-      <label className="mb-1 block text-xs font-medium text-gray-500">
+      <label className="mb-1 block text-xs font-medium text-bark-soft">
         {FIELD_LABELS[name]}
       </label>
       {/* Editable before accepting — the vet should be able to correct a
@@ -83,9 +85,9 @@ export default function TranscriptPanel({
 }) {
   if (!recording) {
     return (
-      <section className="rounded-lg border border-gray-200 p-5">
+      <section className="rounded-lg border border-mist p-5">
         <h2 className="mb-2 font-medium">Draft from recording</h2>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-bark-faint">
           No audio was recorded for this consultation.
         </p>
       </section>
@@ -95,11 +97,11 @@ export default function TranscriptPanel({
   const proposal = recording.extraction;
 
   return (
-    <section className="rounded-lg border border-gray-200 p-5">
+    <section className="rounded-lg border border-mist p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-medium">Draft from recording</h2>
         {recording.durationSeconds && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-bark-soft">
             {Math.floor(recording.durationSeconds / 60)}m {recording.durationSeconds % 60}s
           </span>
         )}
@@ -108,7 +110,7 @@ export default function TranscriptPanel({
       {recording.status === "UPLOADED" && (
         <ActionForm action={requestTranscription}>
           <input type="hidden" name="appointmentId" value={appointmentId} />
-          <p className="mb-3 text-sm text-gray-600">
+          <p className="mb-3 text-sm text-bark-soft">
             Transcribe the recording to get a suggested note. Everything it
             produces is a proposal — nothing is added to the record until you
             accept it.
@@ -119,11 +121,25 @@ export default function TranscriptPanel({
         </ActionForm>
       )}
 
-      {recording.status === "TRANSCRIBING" && (
-        <p className="text-sm text-gray-600">
-          Transcribing. This takes roughly as long as the recording. Reload the
-          page to check.
+      {recording.status === "TRANSCRIBING" && !recording.stalled && (
+        <p className="text-sm text-bark-soft">
+          Transcribing. This can take up to a minute. Reload the page to check.
         </p>
+      )}
+
+      {recording.status === "TRANSCRIBING" && recording.stalled && (
+        <div>
+          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            This transcription seems to have stalled — it started a while ago
+            and never finished. The recording itself is safe.
+          </p>
+          <ActionForm action={requestTranscription}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <SubmitButton pendingLabel="Transcribing..." className={smallButton}>
+              Try again
+            </SubmitButton>
+          </ActionForm>
+        </div>
       )}
 
       {recording.status === "FAILED" && (
@@ -156,7 +172,7 @@ export default function TranscriptPanel({
           )}
 
           {noteLocked ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-bark-soft">
               The note is finalised, so these can no longer be added.
             </p>
           ) : (
@@ -186,7 +202,7 @@ export default function TranscriptPanel({
 
           {proposal.medications.length > 0 && !noteLocked && (
             <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-bark-soft">
                 Medications mentioned
               </h3>
               <div className="grid gap-3">
@@ -194,16 +210,16 @@ export default function TranscriptPanel({
                   <ActionForm
                     key={i}
                     action={acceptProposedMedication}
-                    className="rounded-md border border-gray-200 p-3"
+                    className="rounded-md border border-mist p-3"
                   >
                     <input type="hidden" name="appointmentId" value={appointmentId} />
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="w-36">
-                        <label className="mb-1 block text-xs text-gray-500">Drug</label>
+                        <label className="mb-1 block text-xs text-bark-soft">Drug</label>
                         <input name="drug" className={field} defaultValue={m.drug} required />
                       </div>
                       <div className="w-24">
-                        <label className="mb-1 block text-xs text-gray-500">Dose</label>
+                        <label className="mb-1 block text-xs text-bark-soft">Dose</label>
                         <input
                           name="dose"
                           className={field}
@@ -213,7 +229,7 @@ export default function TranscriptPanel({
                         />
                       </div>
                       <div className="w-32">
-                        <label className="mb-1 block text-xs text-gray-500">Frequency</label>
+                        <label className="mb-1 block text-xs text-bark-soft">Frequency</label>
                         <input
                           name="frequency"
                           className={field}
@@ -223,7 +239,7 @@ export default function TranscriptPanel({
                         />
                       </div>
                       <div className="w-20">
-                        <label className="mb-1 block text-xs text-gray-500">Days</label>
+                        <label className="mb-1 block text-xs text-bark-soft">Days</label>
                         <input
                           name="durationDays"
                           type="number"
@@ -240,7 +256,7 @@ export default function TranscriptPanel({
                       /* The sentence the drug was named in. Checking a
                          dose against what was actually said is real
                          verification; accepting a bare field is not. */
-                      <p className="mt-2 text-xs italic text-gray-500">
+                      <p className="mt-2 text-xs italic text-bark-soft">
                         Heard: “{m.evidence}”
                       </p>
                     )}
@@ -251,11 +267,11 @@ export default function TranscriptPanel({
           )}
 
           {recording.transcript && (
-            <details className="rounded-md border border-gray-200 p-3">
+            <details className="rounded-md border border-mist p-3">
               <summary className="cursor-pointer text-sm font-medium">
                 Full transcript
               </summary>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
+              <p className="mt-2 whitespace-pre-wrap text-sm text-bark">
                 {recording.transcript}
               </p>
             </details>

@@ -86,7 +86,7 @@ export async function bookInstantMatch(
 
   const candidates = await findVetsAvailableNow(specialisationSlug);
   if (candidates.length === 0) {
-    return fail("No vets are available right now. Try booking a specific time.");
+    return fail("No vets have an opening in the next 24 hours. Try booking a specific time.");
   }
 
   // Walk the candidates in order rather than committing to the first.
@@ -139,12 +139,35 @@ export async function cancelAppointment(
   const isOwner = appointment.ownerId === user.id;
   const isVet = appointment.vetProfile.userId === user.id;
   if (!isOwner && !isVet) return fail("Appointment not found.");
-  if (appointment.status === "CANCELLED") return ok;
 
-  await prisma.appointment.update({
-    where: { id },
-    data: { status: "CANCELLED", cancelledAt: new Date(), cancelledBy: user.id },
+  // Only an appointment that has not happened yet can be cancelled.
+  // A vet's access to a patient's records hangs on the appointment's
+  // status, so cancelling one that already took place would take away
+  // their access to a case they treated — and rewrite what happened.
+  const now = new Date();
+  const cancellable = { id, status: "SCHEDULED", startsAt: { gt: now } } as const;
+
+  // The condition is part of the write, not a check before it: between
+  // reading the row above and updating it, the vet may have finalised
+  // the record, and that must win.
+  const { count } = await prisma.appointment.updateMany({
+    where: cancellable,
+    data: { status: "CANCELLED", cancelledAt: now, cancelledBy: user.id },
   });
+
+  if (count === 0) {
+    const current = await prisma.appointment.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (current?.status === "CANCELLED") {
+      return fail("This appointment has already been cancelled.");
+    }
+    if (current?.status === "COMPLETED") {
+      return fail("This consultation is complete and can no longer be cancelled.");
+    }
+    return fail("This appointment has already started and can no longer be cancelled.");
+  }
 
   revalidatePath("/appointments");
   revalidatePath("/vet/appointments");

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { askAssistant, type ChatTurn } from "@/app/assistant/actions";
+import { MAX_HISTORY_TURNS, MAX_QUESTION_CHARS } from "@/lib/assistant-limits";
 
 type Message = ChatTurn & { suggestsConsultation?: boolean };
 
@@ -23,7 +24,12 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
   const send = async (question: string) => {
     if (!question.trim() || busy) return;
 
-    const history = messages.map(({ role, content }) => ({ role, content }));
+    // Only the most recent turns are sent. The whole conversation stays
+    // on screen, but resending all of it with every question would grow
+    // without limit. The server applies the same cap regardless.
+    const history = messages
+      .slice(-MAX_HISTORY_TURNS)
+      .map(({ role, content }) => ({ role, content }));
     setMessages((m) => [...m, { role: "user", content: question }]);
     setInput("");
     setBusy(true);
@@ -56,7 +62,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
 
   return (
     <div className="grid gap-4">
-      <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+      <div className="rounded-md border border-mist bg-pine-50 p-3 text-sm text-bark">
         This assistant reads your pets&apos; records and answers questions about
         them. It can&apos;t diagnose, interpret symptoms, or advise on treatment
         — that needs a vet.
@@ -64,7 +70,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
 
       {messages.length === 0 && (
         <div className="grid gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-bark-soft">
             Try asking
           </p>
           {SUGGESTIONS.map((s) => (
@@ -73,13 +79,13 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               type="button"
               disabled={!hasPets}
               onClick={() => void send(s)}
-              className="rounded-md border border-gray-200 px-3 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-md border border-mist px-3 py-2 text-left text-sm hover:bg-pine-50 disabled:opacity-50"
             >
               {s}
             </button>
           ))}
           {!hasPets && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-bark-soft">
               Add a pet first — there&apos;s nothing to answer questions about yet.
             </p>
           )}
@@ -93,8 +99,8 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               <div
                 className={
                   m.role === "user"
-                    ? "ml-auto max-w-[80%] rounded-lg bg-pine-900 px-3 py-2 text-sm text-white"
-                    : "max-w-[85%] whitespace-pre-wrap rounded-lg bg-gray-100 px-3 py-2 text-sm"
+                    ? "ml-auto w-fit max-w-[80%] whitespace-pre-wrap rounded-lg bg-pine-900 px-3 py-2 text-sm text-white"
+                    : "w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-mist px-3 py-2 text-sm"
                 }
               >
                 {m.content}
@@ -111,7 +117,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               )}
             </div>
           ))}
-          {busy && <p className="text-sm text-gray-400">Reading the records...</p>}
+          {busy && <p className="text-sm text-bark-faint">Reading the records...</p>}
           <div ref={endRef} />
         </div>
       )}
@@ -130,14 +136,15 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
             if (e.key === "Enter") void send(input);
           }}
           disabled={!hasPets || busy}
+          maxLength={MAX_QUESTION_CHARS}
           placeholder="Ask about your pets' records"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50"
+          className="flex-1 rounded-md border border-mist-deep px-3 py-2 text-sm disabled:bg-pine-50"
         />
         <button
           type="button"
           onClick={() => void send(input)}
           disabled={!hasPets || busy || !input.trim()}
-          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
+          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:opacity-60"
         >
           Ask
         </button>

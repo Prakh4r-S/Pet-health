@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Track } from "livekit-client";
 import { useTracks } from "@livekit/components-react";
 import { registerRecording } from "@/app/appointments/[id]/recording-actions";
@@ -29,6 +29,11 @@ function pickRecordingType() {
  * The finished file is uploaded from the browser directly to the blob
  * store. A consultation of any real length is larger than a request body
  * through the application is allowed to be.
+ *
+ * Until it is uploaded the recording exists only in this tab's memory,
+ * so the two ways of losing it are both covered: closing or reloading
+ * the tab asks first, and leaving the call — which unmounts this
+ * component — stops the recording and saves it on the way out.
  */
 export default function CallRecorder({ appointmentId }: { appointmentId: string }) {
   const micTracks = useTracks([Track.Source.Microphone], { onlySubscribed: false });
@@ -45,7 +50,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
   const startedAt = useRef<number>(0);
   const typeRef = useRef<string>("audio/webm");
 
-  const start = useCallback(async () => {
+  const start = useCallback(() => {
     const streams: MediaStream[] = [];
 
     for (const t of micTracks) {
@@ -54,39 +59,60 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
     }
 
     if (streams.length === 0) {
-      setMessage("No audio available to record.");
+      setState("error");
+      setMessage("No audio available to record yet. Check that microphones are on.");
       return;
     }
 
+    // Asked of the browser rather than assumed: Safari has no webm
+    // encoder, and constructing a MediaRecorder with a type it cannot
+    // produce throws.
     const mimeType = pickRecordingType();
     if (!mimeType) {
-      setMessage("This browser cannot record audio.");
+      setState("error");
+      setMessage("This browser can't record audio. Try Chrome, Edge, Firefox or Safari 14.1+.");
       return;
     }
 
-    const context = new AudioContext();
-    const destination = context.createMediaStreamDestination();
-    for (const stream of streams) {
-      context.createMediaStreamSource(stream).connect(destination);
+    let context: AudioContext | null = null;
+
+    try {
+      context = new AudioContext();
+      const destination = context.createMediaStreamDestination();
+      for (const stream of streams) {
+        context.createMediaStreamSource(stream).connect(destination);
+      }
+
+      // Low bitrate is plenty for speech and keeps the file small enough
+      // to upload over a slow connection. Whisper handles either
+      // container via ffmpeg server-side.
+      const recorder = new MediaRecorder(destination.stream, {
+        mimeType,
+        audioBitsPerSecond: 32_000,
+      });
+
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.start(5000); // flush every 5s so a crash loses little
+
+      typeRef.current = baseContentType(mimeType);
+      contextRef.current = context;
+      recorderRef.current = recorder;
+    } catch (error) {
+      // A supported type is not a guarantee: the constructor or start()
+      // can still refuse (a track ended, the device is busy, a policy
+      // blocks capture). Say so rather than leave a dead button.
+      console.error(error);
+      void context?.close();
+      recorderRef.current = null;
+      setState("error");
+      setMessage("Recording couldn't start in this browser. You can still take notes by hand.");
+      return;
     }
-    contextRef.current = context;
 
-    // Low bitrate is plenty for speech and keeps the file small enough to
-    // upload over a slow connection. Whisper handles either container via
-    // ffmpeg server-side.
-    const recorder = new MediaRecorder(destination.stream, {
-      mimeType,
-      audioBitsPerSecond: 32_000,
-    });
-    typeRef.current = baseContentType(mimeType);
-
-    chunksRef.current = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-
-    recorder.start(5000); // flush every 5s so a crash loses little
-    recorderRef.current = recorder;
     startedAt.current = Date.now();
     setSeconds(0);
     setState("recording");
@@ -100,6 +126,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
   const stop = useCallback(async () => {
     const recorder = recorderRef.current;
     if (!recorder) return;
+    recorderRef.current = null;
 
     if (tickRef.current) clearInterval(tickRef.current);
 
@@ -108,9 +135,15 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
         resolve(new Blob(chunksRef.current, { type: typeRef.current }));
     });
 
-    recorder.stop();
+    try {
+      recorder.stop();
+    } catch {
+      // Already inactive — its tracks ended when the call did. Whatever
+      // was flushed before that is still in chunksRef.
+      recorder.onstop?.(new Event("stop"));
+    }
     const blob = await finished;
-    contextRef.current?.close();
+    void contextRef.current?.close();
 
     const durationSeconds = Math.floor((Date.now() - startedAt.current) / 1000);
 
@@ -146,27 +179,59 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
       }
 
       setState("done");
-      setMessage("Recording saved. You can transcribe it from the review page.");
+      setMessage(
+        "Recording saved. On the review page, press Transcribe to turn it into a draft note.",
+      );
     } catch {
       setState("error");
-      setMessage("Upload failed. Check your connection.");
+      setMessage("The recording couldn't be uploaded. Check your connection.");
     }
   }, [appointmentId]);
+
+  // Closing or reloading the tab mid-recording, or mid-upload, discards
+  // audio that exists nowhere else. The browser shows its own wording;
+  // all a page can do is ask for the prompt.
+  const unsaved = state === "recording" || state === "uploading";
+  useEffect(() => {
+    if (!unsaved) return;
+
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = ""; // still required by some browsers
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved]);
+
+  // Leaving the call navigates to the review page and unmounts this
+  // component. That is a client-side navigation, so the page's scripts
+  // keep running: stop the recorder and let the upload finish in the
+  // background rather than silently dropping the consultation.
+  const stopRef = useRef(stop);
+  useEffect(() => {
+    stopRef.current = stop;
+  }, [stop]);
+  useEffect(() => {
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (recorderRef.current) void stopRef.current();
+    };
+  }, []);
 
   const mmss = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(
     seconds % 60,
   ).padStart(2, "0")}`;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3">
+    <div className="rounded-lg border border-mist bg-white p-3">
       <div className="flex flex-wrap items-center gap-3">
         {state === "idle" || state === "error" ? (
           <button
             type="button"
-            onClick={() => void start()}
+            onClick={start}
             className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
           >
-            Record for notes
+            {state === "error" ? "Try recording again" : "Record for notes"}
           </button>
         ) : state === "recording" ? (
           <>
@@ -177,25 +242,37 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
             <button
               type="button"
               onClick={() => void stop()}
-              className="rounded-md bg-gray-100 px-3 py-1.5 text-sm hover:bg-gray-200"
+              className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-pine-100"
             >
               Stop and save
             </button>
           </>
         ) : (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-bark-soft">
             {state === "uploading" ? `Uploading ${Math.round(progress)}%` : "Saved"}
           </span>
         )}
 
         {state === "idle" && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-bark-soft">
             Tell the owner before you start.
+          </span>
+        )}
+        {state === "recording" && (
+          <span className="text-xs text-bark-soft">
+            Saved when you stop or leave the call. Keep this tab open until then.
           </span>
         )}
       </div>
 
-      {message && <p className="mt-2 text-xs text-gray-600">{message}</p>}
+      {message && (
+        <p
+          role={state === "error" ? "alert" : "status"}
+          className={`mt-2 text-xs ${state === "error" ? "text-red-700" : "text-bark-soft"}`}
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 }

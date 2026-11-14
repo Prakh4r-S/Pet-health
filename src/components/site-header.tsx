@@ -12,7 +12,12 @@ import SubmitButton from "@/components/submit-button";
  * showing each person only what applies to them.
  *
  * A vet is also an owner — they may have their own pets — so the vet nav
- * includes the owner links rather than replacing them.
+ * includes the owner links rather than replacing them. The reverse path
+ * is offered too: an owner who is not yet a vet gets a link to
+ * practitioner setup, since otherwise the only way in is the vet door on
+ * the sign-in page, which a signed-in person never sees.
+ *
+ * Signed-out visitors get the landing page's section links instead.
  */
 export default async function SiteHeader() {
   const session = await auth();
@@ -23,13 +28,15 @@ export default async function SiteHeader() {
 
   return (
     <header className="border-b border-mist">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-6 py-4">
-        <Link href="/" className="font-display text-lg text-pine-900">
+      {/* Wraps rather than overflows: a vet's nav has seven items, which
+          do not fit beside the logo on a phone. */}
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4">
+        <Link href="/" className="whitespace-nowrap font-display text-lg text-pine-900">
           Pet Health
         </Link>
 
         {session?.user ? (
-          <nav className="flex items-center gap-5 text-sm">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             {isVet && (
               <>
                 <Link href="/vet/appointments" className="hover:text-pine-700">
@@ -38,7 +45,7 @@ export default async function SiteHeader() {
                 <Link href="/vet/availability" className="hover:text-pine-700">
                   Availability
                 </Link>
-                <span className="h-4 w-px bg-mist" />
+                <span className="hidden h-4 w-px bg-mist sm:block" />
               </>
             )}
             <Link href="/pets" className="hover:text-pine-700">
@@ -50,6 +57,11 @@ export default async function SiteHeader() {
             <Link href="/assistant" className="hover:text-pine-700">
               Ask
             </Link>
+            {!isVet && (
+              <Link href="/vet/onboarding" className="whitespace-nowrap text-bark-soft hover:text-pine-700">
+                Become a vet
+              </Link>
+            )}
             <form
               action={async () => {
                 "use server";
@@ -58,19 +70,27 @@ export default async function SiteHeader() {
             >
               <SubmitButton
                 pendingLabel="Signing out..."
-                className="text-bark-soft hover:text-bark"
+                className="whitespace-nowrap text-bark-soft hover:text-bark"
               >
                 Sign out
               </SubmitButton>
             </form>
           </nav>
         ) : (
-          <Link
-            href="/signin"
-            className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
-          >
-            Sign in
-          </Link>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+            <Link href="/#how-it-works" className="hidden hover:text-pine-700 sm:inline">
+              How it works
+            </Link>
+            <Link href="/#for-vets" className="hidden hover:text-pine-700 sm:inline">
+              For veterinarians
+            </Link>
+            <Link
+              href="/signin"
+              className="rounded-md bg-pine-900 px-4 py-2 text-white hover:bg-pine-700"
+            >
+              Sign in
+            </Link>
+          </nav>
         )}
       </div>
     </header>

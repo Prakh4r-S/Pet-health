@@ -23,30 +23,32 @@ export default function InstantMatch({
 
   if (availableCount === 0) {
     return (
-      <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-        No vets are free right now. Pick a time below instead.
+      <div className="mb-6 rounded-lg border border-mist bg-pine-50 p-4 text-sm text-bark-soft">
+        No vets have an opening in the next 24 hours. Pick a later time below instead.
       </div>
     );
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+    <div className="mb-6 rounded-lg border border-pine-100 bg-pine-50 p-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-green-900">
-            {availableCount} {availableCount === 1 ? "vet is" : "vets are"} free now
+          <p className="text-sm font-medium text-pine-900">
+            {availableCount} {availableCount === 1 ? "vet has" : "vets have"} an opening in the
+            next 24 hours
           </p>
-          <p className="text-xs text-green-800">
-            We&apos;ll match you with whoever can see you soonest.
+          <p className="text-xs text-pine-900">
+            We&apos;ll book you the earliest open slot with any of them. It may
+            not be immediate — you&apos;ll see the time once it&apos;s booked.
           </p>
         </div>
         {!open && (
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-md bg-green-700 px-4 py-2 text-sm text-white hover:bg-green-800"
+            className="shrink-0 rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
           >
-            See a vet now
+            Book the earliest slot
           </button>
         )}
       </div>
@@ -58,13 +60,13 @@ export default function InstantMatch({
           )}
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-44">
-              <label className="mb-1 block text-xs text-green-900" htmlFor="petId">
+              <label className="mb-1 block text-xs text-pine-900" htmlFor="petId">
                 Pet
               </label>
               <select
                 id="petId"
                 name="petId"
-                className="w-full rounded-md border border-green-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-mist-deep bg-white px-3 py-2 text-sm"
                 required
               >
                 {pets.map((p) => (
@@ -73,21 +75,21 @@ export default function InstantMatch({
               </select>
             </div>
             <div className="min-w-48 flex-1">
-              <label className="mb-1 block text-xs text-green-900" htmlFor="reason">
+              <label className="mb-1 block text-xs text-pine-900" htmlFor="reason">
                 What&apos;s wrong?
               </label>
               <input
                 id="reason"
                 name="reason"
-                className="w-full rounded-md border border-green-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-mist-deep bg-white px-3 py-2 text-sm"
                 placeholder="Limping since this morning"
               />
             </div>
             <SubmitButton
-              pendingLabel="Matching..."
-              className="rounded-md bg-green-700 px-4 py-2 text-sm text-white hover:bg-green-800"
+              pendingLabel="Booking..."
+              className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
             >
-              Match me
+              Book it
             </SubmitButton>
           </div>
         </ActionForm>

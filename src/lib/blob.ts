@@ -35,8 +35,32 @@ export async function uploadDocument(params: {
   return { pathname: blob.pathname, url: blob.url };
 }
 
-/** How long to wait for the store to confirm an upload before giving up. */
-const INSPECT_TIMEOUT_MS = 10_000;
+/** How long to wait on the blob store's API before giving up. */
+const STORE_TIMEOUT_MS = 10_000;
+
+/**
+ * Caps how long a call to the blob store may take.
+ *
+ * The SDK retries an unreachable store for a long time before failing,
+ * and does not stop when asked to. Left alone, that turns an outage into
+ * a request that hangs until the platform kills it — so the wait is
+ * raced against a timer here instead.
+ */
+async function withStoreTimeout<T>(call: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("File storage did not respond in time.")),
+      STORE_TIMEOUT_MS,
+    );
+  });
+
+  try {
+    return await Promise.race([call, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * What the blob store actually holds at a pathname, or null if that
@@ -45,20 +69,10 @@ const INSPECT_TIMEOUT_MS = 10_000;
  * After a direct upload the browser tells the server where the file went.
  * That report is a claim, not a fact: size and content type are read back
  * from the store here rather than taken from the client.
- *
- * The SDK retries an unreachable store for a long time before failing, so
- * the wait is capped here — the person watching "Saving..." should get an
- * answer either way.
  */
 export async function inspectBlob(pathname: string) {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), INSPECT_TIMEOUT_MS);
-  });
-
   try {
-    const blob = await Promise.race([head(pathname), timeout]);
-    if (!blob) return null;
+    const blob = await withStoreTimeout(head(pathname));
     return {
       pathname: blob.pathname,
       contentType: blob.contentType,
@@ -66,13 +80,11 @@ export async function inspectBlob(pathname: string) {
     };
   } catch {
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
 export async function getSignedReadUrl(pathname: string): Promise<string> {
-  const token = await issueSignedToken({ operations: ["get"] });
+  const token = await withStoreTimeout(issueSignedToken({ operations: ["get"] }));
 
   const { presignedUrl } = await presignUrl(token, {
     pathname,

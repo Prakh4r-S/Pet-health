@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 function Blocked({ title, body }: { title: string; body: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-lg px-6 py-20 text-center">
-      <h1 className="text-xl font-semibold">{title}</h1>
-      <p className="mt-2 text-sm text-gray-600">{body}</p>
+      <h1 className="text-xl text-pine-900">{title}</h1>
+      <p className="mt-2 text-sm text-bark-soft">{body}</p>
       <Link
         href="/appointments"
         className="mt-6 inline-block rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
@@ -91,10 +91,10 @@ export default async function ConsultationRoomPage({
   return (
     <main className="mx-auto max-w-6xl px-6 py-6">
       <div className="mb-4">
-        <h1 className="text-lg font-semibold">
+        <h1 className="text-lg text-pine-900">
           {appointment.pet.name} · {appointment.pet.species.name}
         </h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-bark-soft">
           {access.isVet
             ? "Consultation"
             : `With ${appointment.vetProfile.user.name ?? "your vet"}`}

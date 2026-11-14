@@ -8,8 +8,8 @@ import {
 import ActionForm from "@/components/action-form";
 import SubmitButton, { primaryButton } from "@/components/submit-button";
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const label = "mb-1 block text-xs font-medium text-gray-600";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
+const label = "mb-1 block text-xs font-medium text-bark-soft";
 
 export type NoteData = {
   status: "DRAFT" | "FINALISED";
@@ -41,23 +41,23 @@ function Prescriptions({
   const locked = note.status === "FINALISED";
 
   return (
-    <section className="rounded-lg border border-gray-200 p-5">
+    <section className="rounded-lg border border-mist p-5">
       <h2 className="mb-4 font-medium">Prescriptions</h2>
 
       {note.prescriptions.length === 0 ? (
-        <p className="text-sm text-gray-400">None.</p>
+        <p className="text-sm text-bark-faint">None.</p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-mist">
           {note.prescriptions.map((p) => (
             <li key={p.id} className="flex items-start justify-between gap-4 py-3">
               <div>
                 <p className="text-sm font-medium">{p.drug}</p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-bark-soft">
                   {p.dose} · {p.frequency}
                   {p.durationDays && ` · ${p.durationDays} days`}
                 </p>
                 {p.instructions && (
-                  <p className="mt-1 text-xs text-gray-500">{p.instructions}</p>
+                  <p className="mt-1 text-xs text-bark-soft">{p.instructions}</p>
                 )}
               </div>
               {!locked && (
@@ -131,19 +131,19 @@ export default function NoteEditor({
   return (
     <div className="grid gap-6">
       {note.scratch && (
-        <section className="rounded-lg border border-gray-200 bg-gray-50 p-5">
-          <h2 className="mb-2 text-sm font-medium text-gray-600">
+        <section className="rounded-lg border border-mist bg-pine-50 p-5">
+          <h2 className="mb-2 text-sm font-medium text-bark-soft">
             Notes taken during the call
           </h2>
-          <p className="whitespace-pre-wrap text-sm text-gray-700">{note.scratch}</p>
+          <p className="whitespace-pre-wrap text-sm text-bark">{note.scratch}</p>
         </section>
       )}
 
-      <section className="rounded-lg border border-gray-200 p-5">
+      <section className="rounded-lg border border-mist p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-medium">Consultation record</h2>
           {locked && (
-            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs text-green-800">
+            <span className="rounded-full bg-pine-100 px-2.5 py-1 text-xs text-pine-900">
               Finalised {note.finalisedAt?.slice(0, 10)}
             </span>
           )}
@@ -243,17 +243,17 @@ export default function NoteEditor({
       )}
 
       {(locked || note.amendments.length > 0) && (
-        <section className="rounded-lg border border-gray-200 p-5">
+        <section className="rounded-lg border border-mist p-5">
           <h2 className="mb-4 font-medium">Amendments</h2>
 
           {note.amendments.length === 0 ? (
-            <p className="text-sm text-gray-400">None.</p>
+            <p className="text-sm text-bark-faint">None.</p>
           ) : (
             <ul className="grid gap-3">
               {note.amendments.map((a) => (
-                <li key={a.id} className="rounded-md border border-gray-100 p-3">
+                <li key={a.id} className="rounded-md border border-mist p-3">
                   <p className="whitespace-pre-wrap text-sm">{a.body}</p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-bark-soft">
                     {a.authorName ?? "Vet"} · {a.createdAt}
                   </p>
                 </li>
@@ -285,7 +285,7 @@ export default function NoteEditor({
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
+      <dt className="text-xs font-medium text-bark-soft">{label}</dt>
       <dd className="mt-0.5 whitespace-pre-wrap text-sm">{value || "—"}</dd>
     </div>
   );

@@ -9,7 +9,7 @@ import SubmitButton from "@/components/submit-button";
 type Breed = { id: string; name: string };
 type Species = { id: string; name: string; breeds: Breed[] };
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const label = "block text-sm font-medium mb-1";
 
 export default function PetForm({ species }: { species: Species[] }) {
@@ -69,7 +69,7 @@ export default function PetForm({ species }: { species: Species[] }) {
       <div>
         <label className={label} htmlFor="birthDate">Date of birth</label>
         <input id="birthDate" name="birthDate" type="date" className={field} />
-        <label className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+        <label className="mt-2 flex items-center gap-2 text-sm text-bark-soft">
           <input type="checkbox" name="birthDateIsApprox" />
           This date is an estimate
         </label>

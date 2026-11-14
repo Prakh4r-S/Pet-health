@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/../auth";
 import SubmitButton from "@/components/submit-button";
+import { safeReturnTo } from "@/lib/return-to";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,12 @@ export const dynamic = "force-dynamic";
  * door is asking to set up a practitioner profile, and is routed to
  * onboarding rather than to their own pets.
  *
+ * Where someone lands afterwards is decided in this order: the page they
+ * were trying to reach when they were asked to sign in, if there was one;
+ * otherwise /welcome, which looks at the account and sends a vet to their
+ * schedule and an owner to their pets. Neither can be known here, before
+ * anyone has signed in.
+ *
  * The intent travels in the redirect URL rather than in a cookie or the
  * session, because it is needed exactly once and only affects where the
  * person lands.
@@ -21,13 +28,19 @@ export const dynamic = "force-dynamic";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ as?: string }>;
+  searchParams: Promise<{ as?: string; callbackUrl?: string }>;
 }) {
-  const session = await auth();
-  if (session?.user) redirect("/pets");
-
-  const { as } = await searchParams;
+  const { as, callbackUrl } = await searchParams;
   const asVet = as === "vet";
+  const returnTo = safeReturnTo(callbackUrl);
+
+  const destination = returnTo ?? (asVet ? "/welcome?as=vet" : "/welcome");
+
+  // Already signed in: carry on to wherever this visit was headed. For
+  // the vet door that is onboarding, via /welcome — an owner who decides
+  // to register as a vet should not be bounced back to their pets.
+  const session = await auth();
+  if (session?.user) redirect(destination);
 
   return (
     <main className="mx-auto flex max-w-md flex-col justify-center px-6 py-24">
@@ -44,9 +57,7 @@ export default async function SignInPage({
         className="mt-8"
         action={async () => {
           "use server";
-          await signIn("google", {
-            redirectTo: asVet ? "/welcome?as=vet" : "/pets",
-          });
+          await signIn("google", { redirectTo: destination });
         }}
       >
         <SubmitButton

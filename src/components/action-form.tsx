@@ -74,7 +74,7 @@ export default function ActionForm({
         </p>
       )}
       {state.success && successMessage && !pending && (
-        <p role="status" className="col-span-full mt-2 basis-full text-left text-sm text-green-800">
+        <p role="status" className="col-span-full mt-2 basis-full text-left text-sm text-pine-900">
           {successMessage}
         </p>
       )}

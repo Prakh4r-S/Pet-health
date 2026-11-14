@@ -11,7 +11,7 @@ type Pet = { id: string; name: string };
 // boundary intact, and the string is unambiguous about the instant.
 type Props = { vetProfileId: string; pets: Pet[]; slots: string[] };
 
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 
 const subscribe = () => () => {};
 
@@ -30,7 +30,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (pets.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
         Add a pet before booking.
       </p>
     );
@@ -52,7 +52,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (slots.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
         No times available in the next two weeks.
       </p>
     );
@@ -60,7 +60,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (!inBrowser) {
     return (
-      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
         Loading available times...
       </p>
     );
@@ -74,7 +74,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
       <div className="max-h-80 overflow-y-auto pr-1">
         {[...byDay.entries()].map(([day, times]) => (
           <div key={day} className="mb-4">
-            <p className="mb-2 text-xs font-medium text-gray-500">{day}</p>
+            <p className="mb-2 text-xs font-medium text-bark-soft">{day}</p>
             <div className="flex flex-wrap gap-2">
               {times.map((iso) => (
                 <button
@@ -84,7 +84,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
                   className={`rounded-md px-3 py-1.5 text-sm ${
                     selected === iso
                       ? "bg-pine-900 text-white"
-                      : "bg-gray-100 hover:bg-gray-200"
+                      : "bg-mist hover:bg-pine-100"
                   }`}
                 >
                   {new Date(iso).toLocaleTimeString(undefined, {
