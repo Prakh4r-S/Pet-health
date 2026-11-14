@@ -129,8 +129,38 @@ model Pet {
 
   documents Document[]
   prescriptions Prescription[]
+  passport PetPassport?
 
   @@index([ownerId, archivedAt])
+}
+
+/// A public, read-only link to a summary of one pet's critical health
+/// information — for a sitter, a groomer, or an emergency vet who has no
+/// account.
+///
+/// A table of its own rather than a column on Pet, for two reasons. The
+/// link is a thing with its own life: it is created, replaced and revoked
+/// without the pet changing. And nothing that reads Pet depends on it, so
+/// code that predates this table keeps working against a database that
+/// has it, and the reverse.
+///
+/// The token is the whole of the access control: whoever holds the URL
+/// can read the summary, and nobody else can. It is stored as issued, not
+/// hashed, so the owner can copy the link again later; what it unlocks is
+/// a summary the owner chose to publish, not the record itself. Deleting
+/// the row revokes the link; replacing the token invalidates the old one.
+model PetPassport {
+  id          String   @id @default(cuid())
+  petId       String   @unique
+  token       String   @unique
+  /// Free text from the owner, shown on the passport — typically how to
+  /// reach them. The only contact detail published; the account's email
+  /// address never is.
+  contactNote String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
 }
 
 // ---------------------------------------------------------------
