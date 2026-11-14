@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { fail, ok, type ActionState } from "@/lib/action-result";
 import { newPassportToken } from "@/lib/passport";
+import { parseImageField } from "@/lib/upload-rules";
 
 /**
  * Confirms the pet belongs to the signed-in user before any write.
@@ -143,8 +144,11 @@ export async function updatePet(
   const birthDate = parseOptionalDate(String(formData.get("birthDate") ?? ""));
   const birthDateIsApprox = formData.get("birthDateIsApprox") === "on";
 
+  const photoUrl = parseImageField(formData.get("photoUrl"));
+
   if (!name) return fail("Name is required.");
   if (name.length > 80) return fail("That name is too long.");
+  if (photoUrl === false) return fail("That photo could not be used. Upload it again.");
   if (birthDate === undefined) return fail("Enter a valid date of birth.");
   if (birthDate && birthDate > new Date()) return fail("Date of birth cannot be in the future.");
   if (microchipNumber && microchipNumber.length > 40) {
@@ -173,6 +177,7 @@ export async function updatePet(
       microchipNumber,
       birthDate,
       birthDateIsApprox: birthDate ? birthDateIsApprox : false,
+      photoUrl,
     },
   });
 

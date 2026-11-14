@@ -12,6 +12,8 @@ import {
   isValidTimezone,
   nextCalendarDay,
 } from "@/lib/timezones";
+import { parseVetDetails } from "@/lib/vet-profile-input";
+import { parseImageField } from "@/lib/upload-rules";
 
 export async function createVetProfile(
   _previous: ActionState,
@@ -19,26 +21,18 @@ export async function createVetProfile(
 ): Promise<ActionState> {
   const user = await getCurrentUser();
 
-  const licenceNumber = String(formData.get("licenceNumber") ?? "").trim();
-  const clinicName = String(formData.get("clinicName") ?? "").trim() || null;
-  const city = String(formData.get("city") ?? "").trim() || null;
-  const bio = String(formData.get("bio") ?? "").trim() || null;
-  const yearsRaw = String(formData.get("yearsExperience") ?? "");
+  const parsed = parseVetDetails(formData);
+  if ("error" in parsed) return fail(parsed.error);
+
   const slotMinutes = Number(formData.get("slotMinutes") ?? 30);
   const specialisationIds = formData.getAll("specialisationIds").map(String);
   const timezone = String(formData.get("timezone") ?? "") || DEFAULT_TIMEZONE;
 
-  if (!licenceNumber) return fail("Licence number is required.");
   // Availability is stored as wall-clock hours in this zone, so a wrong
   // or unusable value here would shift every slot the vet ever offers.
   if (!isValidTimezone(timezone)) return fail("Choose a timezone from the list.");
   if (![15, 20, 30, 45, 60].includes(slotMinutes)) {
     return fail("Choose an appointment length.");
-  }
-
-  const years = yearsRaw ? Number(yearsRaw) : null;
-  if (years !== null && (!Number.isInteger(years) || years < 0 || years > 70)) {
-    return fail("Years of experience should be a whole number between 0 and 70.");
   }
 
   // Only ids that exist are connected; an unknown one would otherwise
@@ -57,11 +51,7 @@ export async function createVetProfile(
       prisma.vetProfile.create({
         data: {
           userId: user.id,
-          licenceNumber,
-          clinicName,
-          city,
-          bio,
-          yearsExperience: years,
+          ...parsed.details,
           slotMinutes,
           timezone,
           specialisations: { connect: specialisations },
@@ -78,6 +68,59 @@ export async function createVetProfile(
   }
 
   redirect("/vet/availability");
+}
+
+/**
+ * Saves the vet's own practitioner and clinic profile.
+ *
+ * Everything an owner reads before booking is edited here. Timezone and
+ * appointment length are not: both change what the existing weekly hours
+ * mean, and belong with the availability they define.
+ */
+export async function updateVetProfile(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const { user, profile } = await requireVetProfile();
+
+  const parsed = parseVetDetails(formData);
+  if ("error" in parsed) return fail(parsed.error);
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return fail("Display name is required. Owners book you by it.");
+  if (name.length > 80) return fail("That name is too long.");
+
+  const avatarUrl = parseImageField(formData.get("avatarUrl"));
+  const clinicImageUrl = parseImageField(formData.get("clinicImageUrl"));
+  if (avatarUrl === false || clinicImageUrl === false) {
+    return fail("That photo could not be used. Upload it again.");
+  }
+
+  const specialisations = await prisma.specialisation.findMany({
+    where: { id: { in: formData.getAll("specialisationIds").map(String) } },
+    select: { id: true },
+  });
+
+  // The display name lives on the account, the rest on the profile;
+  // written together so a failure cannot save half of the form.
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { name } }),
+    prisma.vetProfile.update({
+      where: { id: profile.id },
+      data: {
+        ...parsed.details,
+        avatarUrl,
+        clinicImageUrl,
+        acceptingNewPatients: formData.get("acceptingNewPatients") === "on",
+        specialisations: { set: specialisations },
+      },
+    }),
+  ]);
+
+  revalidatePath("/vet/profile");
+  revalidatePath("/vets");
+  revalidatePath(`/vets/${profile.id}`);
+  return ok;
 }
 
 export async function addAvailability(

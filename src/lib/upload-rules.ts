@@ -26,7 +26,8 @@ export const IMAGE_PURPOSES = ["user-avatar", "pet-photo", "vet-avatar", "clinic
 export type ImagePurpose = (typeof IMAGE_PURPOSES)[number];
 
 export type ImageUploadRequest =
-  | { kind: "image"; purpose: "pet-photo"; petId: string }
+  // No petId while the pet is still being added: there is nothing to own yet.
+  | { kind: "image"; purpose: "pet-photo"; petId?: string }
   | { kind: "image"; purpose: Exclude<ImagePurpose, "pet-photo"> };
 
 /** What MediaRecorder produces: webm on Chromium and Firefox, mp4 on Safari. */
@@ -61,7 +62,7 @@ export function recordingPrefix(appointmentId: string) {
  */
 export function imagePrefix(request: ImageUploadRequest) {
   return request.purpose === "pet-photo"
-    ? `images/pet-photo/${request.petId}/`
+    ? `images/pet-photo/${request.petId ?? "new"}/`
     : `images/${request.purpose}/`;
 }
 
@@ -82,6 +83,20 @@ export function isUploadedImageUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Reads a photo field from a submitted form.
+ *
+ * `undefined` means the form had no such field and the stored photo
+ * should be left alone; `null` means the photo was removed; `false`
+ * means the value is not one of our uploads and should be refused.
+ */
+export function parseImageField(value: FormDataEntryValue | null) {
+  if (value === null) return undefined;
+  const url = String(value).trim();
+  if (!url) return null;
+  return isUploadedImageUrl(url) ? url : false;
 }
 
 export function safeFilename(filename: string) {

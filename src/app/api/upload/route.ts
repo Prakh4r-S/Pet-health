@@ -33,7 +33,8 @@ function parseRequest(clientPayload: string | null): UploadRequest | null {
     if (value.kind === "image" && IMAGE_PURPOSES.includes(value.purpose as ImagePurpose)) {
       const purpose = value.purpose as ImagePurpose;
       if (purpose !== "pet-photo") return { kind: "image", purpose };
-      if (typeof value.petId === "string") {
+      if (value.petId === undefined) return { kind: "image", purpose };
+      if (typeof value.petId === "string" && /^[a-z0-9]+$/i.test(value.petId)) {
         return { kind: "image", purpose, petId: value.petId };
       }
     }
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
         if (upload.kind === "image") {
           // Anyone signed in may upload their own photo; a pet's photo
           // is the owner's to set, not a treating vet's.
-          if (upload.purpose === "pet-photo") {
+          if (upload.purpose === "pet-photo" && upload.petId) {
             const access = await getPetAccess(upload.petId, userId);
             if (access?.role !== "OWNER") throw new Error("Pet not found.");
           }

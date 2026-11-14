@@ -291,6 +291,8 @@ model VetProfile {
   userId          String   @unique
   licenceNumber   String
   // Practitioner
+  // Degrees and memberships as the vet writes them: "BVSc & AH, MVSc".
+  qualifications  String?
   avatarUrl       String?
   bio             String?
   // Free-text areas of practice, for display. The Specialisation relation
