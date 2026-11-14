@@ -131,7 +131,7 @@ export default async function VetDetailPage({
             name={name}
             photoUrls={[vet.avatarUrl, vet.user.avatarUrl, vet.user.image]}
             size="lg"
-            className={vet.clinicImageUrl ? "ring-4 ring-white" : ""}
+            className={vet.clinicImageUrl ? "ring-4 ring-cream" : ""}
           />
           <div className="min-w-0 pb-1">
             <h1 className="text-2xl text-navy-900">{name}</h1>

@@ -19,6 +19,13 @@
   --color-ink-soft: #535a6b;
   /* Placeholder and "nothing here yet" text: present, but not competing. */
   --color-ink-faint: #858b99;
+  /* The page itself: a warm off-white rather than paper white, so long
+     pages of records are easier on the eye and the white of a form
+     field or a raised card reads as a surface on top of it. Picked warm
+     to sit with the skin and fur tones in the logo; light enough that
+     ink, navy and aqua-600 text all keep their contrast. */
+  --color-cream: #faf6ee;
+
   --color-mist: #ecf0f3;
   /* Mist is right for dividers and card edges but too faint to mark out
      something you are meant to type into. */
@@ -48,9 +55,18 @@
   }
 
   body {
-    background: white;
+    background: var(--color-cream);
     color: var(--color-ink);
     font-family: var(--font-sans);
+  }
+
+  /* Somewhere to type stays white. Left transparent, a field would take
+     the page's cream and stop looking like a field. A utility class on
+     the element still overrides this. */
+  input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"]),
+  select,
+  textarea {
+    background-color: white;
   }
 
   /* Semibold by default. System fonts ship every weight, so unlike the
