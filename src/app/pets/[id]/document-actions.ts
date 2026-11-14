@@ -5,11 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getPetAccess } from "@/lib/pet-access";
 import {
-  uploadDocument,
+  inspectBlob,
   deleteDocument,
   ALLOWED_CONTENT_TYPES,
   MAX_UPLOAD_BYTES,
 } from "@/lib/blob";
+import { baseContentType, documentPrefix } from "@/lib/upload-rules";
+import { fail, type ActionResult } from "@/lib/action-result";
 
 const KINDS = [
   "LAB_REPORT",
@@ -21,59 +23,76 @@ const KINDS = [
 ] as const;
 type Kind = (typeof KINDS)[number];
 
-export async function uploadPetDocument(formData: FormData) {
+/**
+ * Turns a file the browser has already uploaded into a document on the
+ * pet's record.
+ *
+ * The file went straight to the blob store with a token from /api/upload,
+ * so all that arrives here is where it landed. That is checked rather
+ * than believed: the path must sit under this pet's prefix, the caller
+ * must have access to this pet, and size and type are read back from the
+ * store instead of being taken from the client.
+ */
+export async function registerPetDocument(input: {
+  petId: string;
+  pathname: string;
+  title: string;
+  kind: string;
+  note?: string | null;
+}): Promise<ActionResult> {
   const user = await getCurrentUser();
 
-  const petId = String(formData.get("petId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  const note = String(formData.get("note") ?? "").trim() || null;
-  const kindRaw = String(formData.get("kind") ?? "OTHER");
-  const appointmentId = String(formData.get("appointmentId") ?? "") || null;
-  const file = formData.get("file");
+  const petId = String(input.petId ?? "");
+  const pathname = String(input.pathname ?? "");
+  const title = String(input.title ?? "").trim().slice(0, 200);
+  const note = String(input.note ?? "").trim() || null;
 
   // Both owner and treating vet may attach documents — a vet uploading a
   // lab report from the clinic is a normal thing to want.
   const access = await getPetAccess(petId, user.id);
-  if (!access) throw new Error("Pet not found.");
+  if (!access) return fail("Pet not found.");
 
-  if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file.");
-  if (file.size > MAX_UPLOAD_BYTES) throw new Error("File must be under 10 MB.");
+  if (!pathname.startsWith(documentPrefix(petId))) return fail("Invalid upload.");
 
-  // Content type is checked, but note it comes from the client and is not
-  // trustworthy on its own. It is enough to stop honest mistakes; a
-  // production system would sniff the bytes.
-  if (!ALLOWED_CONTENT_TYPES.includes(file.type)) {
-    throw new Error("Only PDF and image files are accepted.");
+  const blob = await inspectBlob(pathname);
+  if (!blob) return fail("Could not confirm the upload. Please try again.");
+
+  // The upload token already enforced both of these. They are repeated
+  // because this action can be called with any pathname under the prefix,
+  // not only one that came from a token issued a moment ago.
+  if (blob.sizeBytes > MAX_UPLOAD_BYTES) return fail("File must be under 10 MB.");
+  const contentType = baseContentType(blob.contentType);
+  if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
+    return fail("Only PDF and image files are accepted.");
   }
 
-  const kind: Kind = (KINDS as readonly string[]).includes(kindRaw)
-    ? (kindRaw as Kind)
+  const kind: Kind = (KINDS as readonly string[]).includes(input.kind)
+    ? (input.kind as Kind)
     : "OTHER";
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-
-  const { pathname } = await uploadDocument({
-    petId,
-    filename: file.name,
-    contentType: file.type,
-    body: bytes,
-  });
-
-  await prisma.document.create({
-    data: {
-      petId,
-      uploadedById: user.id,
-      appointmentId,
-      kind,
-      title: title || file.name,
-      note,
-      pathname,
-      contentType: file.type,
-      sizeBytes: file.size,
-    },
-  });
+  try {
+    await prisma.document.create({
+      data: {
+        petId,
+        uploadedById: user.id,
+        kind,
+        title: title || "Untitled document",
+        note,
+        pathname: blob.pathname,
+        contentType,
+        sizeBytes: blob.sizeBytes,
+      },
+    });
+  } catch (error) {
+    // pathname is unique: the same upload cannot be registered twice.
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+      return fail("That file has already been added.");
+    }
+    throw error;
+  }
 
   revalidatePath(`/pets/${petId}`);
+  return { ok: true };
 }
 
 export async function deletePetDocument(formData: FormData) {

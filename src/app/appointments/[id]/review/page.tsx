@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getPatientSummary } from "@/lib/patient-summary";
 import PatientPanel from "@/components/patient-panel";
 import NoteEditor from "@/components/note-editor";
+import LocalTime from "@/components/local-time";
 import TranscriptPanel, { type Proposal } from "@/components/transcript-panel";
 
 export const dynamic = "force-dynamic";
@@ -68,12 +69,7 @@ export default async function ConsultationReviewPage({
         <h1 className="text-2xl font-semibold">{appointment.pet.name}</h1>
         <p className="text-sm text-gray-600">
           Consultation on{" "}
-          {appointment.startsAt.toLocaleString(undefined, {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          <LocalTime date={appointment.startsAt.toISOString()} format="dayTime" />
           {appointment.owner.name && ` · owner: ${appointment.owner.name}`}
           {appointment.reason && ` · ${appointment.reason}`}
         </p>
@@ -102,10 +98,7 @@ export default async function ConsultationReviewPage({
                     <p className="text-xs text-gray-500">
                       {kindLabels[d.kind] ?? d.kind}
                       {" · "}
-                      {d.createdAt.toLocaleTimeString(undefined, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      <LocalTime date={d.createdAt.toISOString()} format="time" />
                     </p>
                     {d.note && <p className="mt-1 text-xs text-gray-600">{d.note}</p>}
                   </li>

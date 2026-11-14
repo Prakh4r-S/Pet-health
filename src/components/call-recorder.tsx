@@ -2,10 +2,20 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Track } from "livekit-client";
-import { useTracks, useLocalParticipant } from "@livekit/components-react";
-import { uploadRecording } from "@/app/appointments/[id]/recording-actions";
+import { useTracks } from "@livekit/components-react";
+import { registerRecording } from "@/app/appointments/[id]/recording-actions";
+import { uploadDirect } from "@/lib/client-upload";
+import { MAX_RECORDING_BYTES, baseContentType } from "@/lib/upload-rules";
 
 type State = "idle" | "recording" | "uploading" | "done" | "error";
+
+/** webm/opus on Chromium and Firefox; Safari only offers mp4. */
+const RECORDING_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+
+function pickRecordingType() {
+  if (typeof MediaRecorder === "undefined") return null;
+  return RECORDING_TYPES.find((t) => MediaRecorder.isTypeSupported(t)) ?? null;
+}
 
 /**
  * Records the consultation audio for later transcription.
@@ -14,21 +24,26 @@ type State = "idle" | "recording" | "uploading" | "done" | "error";
  * MediaStreamTrack. MediaRecorder takes one stream, so the two are mixed
  * through a Web Audio graph first: each track becomes a source node,
  * both connect to a single destination, and that destination's stream is
- * what gets recorded. python3 -m venv .venvexport SERVICE_API_KEY="pick-any-long-random-string"
+ * what gets recorded.
+ *
+ * The finished file is uploaded from the browser directly to the blob
+ * store. A consultation of any real length is larger than a request body
+ * through the application is allowed to be.
  */
 export default function CallRecorder({ appointmentId }: { appointmentId: string }) {
-  const { localParticipant } = useLocalParticipant();
   const micTracks = useTracks([Track.Source.Microphone], { onlySubscribed: false });
 
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [seconds, setSeconds] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAt = useRef<number>(0);
+  const typeRef = useRef<string>("audio/webm");
 
   const start = useCallback(async () => {
     const streams: MediaStream[] = [];
@@ -43,6 +58,12 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
       return;
     }
 
+    const mimeType = pickRecordingType();
+    if (!mimeType) {
+      setMessage("This browser cannot record audio.");
+      return;
+    }
+
     const context = new AudioContext();
     const destination = context.createMediaStreamDestination();
     for (const stream of streams) {
@@ -50,12 +71,14 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
     }
     contextRef.current = context;
 
-    // webm/opus is what browsers agree on and is small enough to upload
-    // over a slow connection. Whisper handles it via ffmpeg server-side.
+    // Low bitrate is plenty for speech and keeps the file small enough to
+    // upload over a slow connection. Whisper handles either container via
+    // ffmpeg server-side.
     const recorder = new MediaRecorder(destination.stream, {
-      mimeType: "audio/webm;codecs=opus",
+      mimeType,
       audioBitsPerSecond: 32_000,
     });
+    typeRef.current = baseContentType(mimeType);
 
     chunksRef.current = [];
     recorder.ondataavailable = (e) => {
@@ -72,7 +95,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
     tickRef.current = setInterval(() => {
       setSeconds(Math.floor((Date.now() - startedAt.current) / 1000));
     }, 1000);
-  }, [micTracks, localParticipant]);
+  }, [micTracks]);
 
   const stop = useCallback(async () => {
     const recorder = recorderRef.current;
@@ -82,27 +105,51 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
 
     const finished = new Promise<Blob>((resolve) => {
       recorder.onstop = () =>
-        resolve(new Blob(chunksRef.current, { type: "audio/webm" }));
+        resolve(new Blob(chunksRef.current, { type: typeRef.current }));
     });
 
     recorder.stop();
     const blob = await finished;
     contextRef.current?.close();
 
+    const durationSeconds = Math.floor((Date.now() - startedAt.current) / 1000);
+
+    if (blob.size === 0) {
+      setState("error");
+      setMessage("No audio was captured.");
+      return;
+    }
+    if (blob.size > MAX_RECORDING_BYTES) {
+      setState("error");
+      setMessage("Recording too large to save.");
+      return;
+    }
+
     setState("uploading");
+    setProgress(0);
 
     try {
-      const form = new FormData();
-      form.append("appointmentId", appointmentId);
-      form.append("durationSeconds", String(Math.floor((Date.now() - startedAt.current) / 1000)));
-      form.append("file", blob, `consultation-${appointmentId}.webm`);
+      const extension = typeRef.current === "audio/mp4" ? "m4a" : "webm";
+      const pathname = await uploadDirect({
+        file: blob,
+        filename: `consultation-${appointmentId}.${extension}`,
+        contentType: typeRef.current,
+        request: { kind: "recording", appointmentId },
+        onProgress: setProgress,
+      });
 
-      await uploadRecording(form);
+      const result = await registerRecording({ appointmentId, pathname, durationSeconds });
+      if (!result.ok) {
+        setState("error");
+        setMessage(result.error);
+        return;
+      }
+
       setState("done");
-      setMessage("Recording saved. A draft note will appear on the review page.");
-    } catch (error) {
+      setMessage("Recording saved. You can transcribe it from the review page.");
+    } catch {
       setState("error");
-      setMessage(error instanceof Error ? error.message : "Upload failed.");
+      setMessage("Upload failed. Check your connection.");
     }
   }, [appointmentId]);
 
@@ -137,7 +184,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
           </>
         ) : (
           <span className="text-sm text-gray-600">
-            {state === "uploading" ? "Uploading..." : "Saved"}
+            {state === "uploading" ? `Uploading ${Math.round(progress)}%` : "Saved"}
           </span>
         )}
 

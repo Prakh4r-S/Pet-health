@@ -3,9 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
-import { uploadDocument, getSignedReadUrl } from "@/lib/blob";
-
-const MAX_RECORDING_BYTES = 60 * 1024 * 1024;
+import {
+  inspectBlob,
+  deleteDocument,
+  getSignedReadUrl,
+  ALLOWED_RECORDING_TYPES,
+  MAX_RECORDING_BYTES,
+} from "@/lib/blob";
+import { baseContentType, recordingPrefix } from "@/lib/upload-rules";
+import { fail, type ActionResult } from "@/lib/action-result";
 
 async function requireOwnAppointment(appointmentId: string) {
   const user = await getCurrentUser();
@@ -17,22 +23,46 @@ async function requireOwnAppointment(appointmentId: string) {
   return { user, appointment };
 }
 
-export async function uploadRecording(formData: FormData) {
-  const appointmentId = String(formData.get("appointmentId") ?? "");
-  const { appointment } = await requireOwnAppointment(appointmentId);
+/**
+ * Attaches a recording the browser has already uploaded to its
+ * appointment.
+ *
+ * As with documents, the audio went directly to the blob store and only
+ * its pathname arrives here. The path must sit under this appointment's
+ * prefix, and size and type come from the store, not from the caller.
+ */
+export async function registerRecording(input: {
+  appointmentId: string;
+  pathname: string;
+  durationSeconds: number | null;
+}): Promise<ActionResult> {
+  const appointmentId = String(input.appointmentId ?? "");
+  const pathname = String(input.pathname ?? "");
 
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) throw new Error("No audio received.");
-  if (file.size > MAX_RECORDING_BYTES) throw new Error("Recording too large.");
+  const user = await getCurrentUser();
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: appointmentId, vetProfile: { userId: user.id } },
+    select: { id: true },
+  });
+  if (!appointment) return fail("Not your consultation.");
 
-  const durationSeconds = Number(formData.get("durationSeconds") ?? 0) || null;
-  const bytes = Buffer.from(await file.arrayBuffer());
+  if (!pathname.startsWith(recordingPrefix(appointmentId))) return fail("Invalid upload.");
 
-  const { pathname } = await uploadDocument({
-    petId: appointment.petId,
-    filename: `consultation-${appointmentId}.webm`,
-    contentType: "audio/webm",
-    body: bytes,
+  const blob = await inspectBlob(pathname);
+  if (!blob) return fail("Could not confirm the upload. Please try again.");
+  if (blob.sizeBytes === 0) return fail("No audio received.");
+  if (blob.sizeBytes > MAX_RECORDING_BYTES) return fail("Recording too large.");
+
+  const contentType = baseContentType(blob.contentType);
+  if (!ALLOWED_RECORDING_TYPES.includes(contentType)) return fail("Unexpected audio format.");
+
+  const duration = Number(input.durationSeconds);
+  const durationSeconds =
+    Number.isFinite(duration) && duration > 0 ? Math.floor(duration) : null;
+
+  const previous = await prisma.consultationRecording.findUnique({
+    where: { appointmentId },
+    select: { pathname: true },
   });
 
   // Upsert rather than create: a vet who records twice replaces the
@@ -40,9 +70,9 @@ export async function uploadRecording(formData: FormData) {
   await prisma.consultationRecording.upsert({
     where: { appointmentId },
     update: {
-      pathname,
-      contentType: "audio/webm",
-      sizeBytes: bytes.byteLength,
+      pathname: blob.pathname,
+      contentType,
+      sizeBytes: blob.sizeBytes,
       durationSeconds,
       status: "UPLOADED",
       transcript: null,
@@ -53,14 +83,26 @@ export async function uploadRecording(formData: FormData) {
     },
     create: {
       appointmentId,
-      pathname,
-      contentType: "audio/webm",
-      sizeBytes: bytes.byteLength,
+      pathname: blob.pathname,
+      contentType,
+      sizeBytes: blob.sizeBytes,
       durationSeconds,
     },
   });
 
+  // The replaced take is no longer reachable from any row. Row first,
+  // blob second: a failed delete leaves an orphan, which is untidy but
+  // harmless.
+  if (previous && previous.pathname !== blob.pathname) {
+    try {
+      await deleteDocument(previous.pathname);
+    } catch {
+      // orphaned blob; nothing points at it
+    }
+  }
+
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return { ok: true };
 }
 
 /**

@@ -6,6 +6,29 @@ export const JOIN_WINDOW_BEFORE_MINUTES = 10;
 /** And stays open a while after, for overruns. */
 export const JOIN_WINDOW_AFTER_MINUTES = 30;
 
+/**
+ * When the room for an appointment can be entered.
+ *
+ * One definition, used both to admit people to the call and to decide
+ * which appointments the schedule pages still treat as live. If those two
+ * disagreed, a page would offer a "Join call" button the room then
+ * refused, or hide an appointment whose room was still open.
+ */
+export function getJoinWindow(appointment: { startsAt: Date; endsAt: Date }) {
+  return {
+    opensAt: new Date(appointment.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * 60_000),
+    closesAt: new Date(appointment.endsAt.getTime() + JOIN_WINDOW_AFTER_MINUTES * 60_000),
+  };
+}
+
+/**
+ * The earliest `endsAt` an appointment can have while its room is still
+ * open — the cut-off between "current" and "past" in a query.
+ */
+export function liveEndsAtCutoff(now: Date = new Date()) {
+  return new Date(now.getTime() - JOIN_WINDOW_AFTER_MINUTES * 60_000);
+}
+
 export type RoomAccess =
   | {
       ok: true;
@@ -56,12 +79,7 @@ export async function getRoomAccess(
   if (!isOwner && !isVet) return { ok: false, reason: "NOT_A_PARTICIPANT" };
 
   const now = new Date();
-  const opensAt = new Date(
-    appointment.startsAt.getTime() - JOIN_WINDOW_BEFORE_MINUTES * 60_000,
-  );
-  const closesAt = new Date(
-    appointment.endsAt.getTime() + JOIN_WINDOW_AFTER_MINUTES * 60_000,
-  );
+  const { opensAt, closesAt } = getJoinWindow(appointment);
 
   if (now < opensAt) return { ok: false, reason: "TOO_EARLY", opensAt };
   if (now > closesAt) return { ok: false, reason: "ENDED" };

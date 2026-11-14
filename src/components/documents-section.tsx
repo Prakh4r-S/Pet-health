@@ -1,6 +1,5 @@
-import { uploadPetDocument, deletePetDocument } from "@/app/pets/[id]/document-actions";
-
-const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+import { deletePetDocument } from "@/app/pets/[id]/document-actions";
+import DocumentUploadForm from "@/components/document-upload-form";
 
 const KIND_LABELS: Record<string, string> = {
   LAB_REPORT: "Lab report",
@@ -80,50 +79,7 @@ export default function DocumentsSection({
         </ul>
       )}
 
-      {canUpload && (
-        <form action={uploadPetDocument} className="mt-5 grid gap-3">
-          <input type="hidden" name="petId" value={petId} />
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="w-52">
-              <label className="mb-1 block text-xs text-gray-600" htmlFor="file">
-                File (PDF or image, max 10 MB)
-              </label>
-              <input
-                id="file"
-                name="file"
-                type="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp"
-                className="w-full text-sm"
-                required
-              />
-            </div>
-            <div className="w-44">
-              <label className="mb-1 block text-xs text-gray-600" htmlFor="kind">
-                Type
-              </label>
-              <select id="kind" name="kind" className={field} defaultValue="LAB_REPORT">
-                <option value="LAB_REPORT">Lab report</option>
-                <option value="PRESCRIPTION">Prescription</option>
-                <option value="IMAGING">Imaging</option>
-                <option value="VACCINATION_CERT">Vaccination certificate</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-            <div className="min-w-44 flex-1">
-              <label className="mb-1 block text-xs text-gray-600" htmlFor="title">
-                Title (optional)
-              </label>
-              <input id="title" name="title" className={field} placeholder="Blood panel, March" />
-            </div>
-            <button
-              type="submit"
-              className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
-            >
-              Upload
-            </button>
-          </div>
-        </form>
-      )}
+      {canUpload && <DocumentUploadForm petId={petId} />}
     </section>
   );
 }
