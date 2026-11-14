@@ -4,16 +4,16 @@ import { useState } from "react";
 import { bookInstantMatch } from "@/app/appointments/actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import IntakeFields, { type IntakePet } from "@/components/intake-fields";
 
 
-type Pet = { id: string; name: string };
 
 export default function InstantMatch({
   pets,
   specialisationSlug,
   availableCount,
 }: {
-  pets: Pet[];
+  pets: IntakePet[];
   specialisationSlug?: string;
   availableCount: number;
 }) {
@@ -58,39 +58,18 @@ export default function InstantMatch({
           {specialisationSlug && (
             <input type="hidden" name="specialisationSlug" value={specialisationSlug} />
           )}
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="w-44">
-              <label className="mb-1 block text-xs text-navy-900" htmlFor="petId">
-                Pet
-              </label>
-              <select
-                id="petId"
-                name="petId"
-                className="w-full rounded-md border border-mist-deep bg-white px-3 py-2 text-sm"
-                required
-              >
-                {pets.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-48 flex-1">
-              <label className="mb-1 block text-xs text-navy-900" htmlFor="reason">
-                What&apos;s wrong?
-              </label>
-              <input
-                id="reason"
-                name="reason"
-                className="w-full rounded-md border border-mist-deep bg-white px-3 py-2 text-sm"
-                placeholder="Limping since this morning"
-              />
-            </div>
-            <SubmitButton
-              pendingLabel="Booking..."
-              className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700"
+          <div className="rounded-md border border-aqua-100 bg-white p-4">
+            <IntakeFields pets={pets} compact />
+          </div>
+          <div className="flex items-center gap-3">
+            <SubmitButton pendingLabel="Booking...">Book the earliest slot</SubmitButton>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-sm text-ink-soft hover:underline"
             >
-              Book it
-            </SubmitButton>
+              Not now
+            </button>
           </div>
         </ActionForm>
       )}

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getAvailableSlots, findVetsAvailableNow } from "@/lib/slots";
 import { fail, isUniqueViolation, ok, type ActionState } from "@/lib/action-result";
+import { intakeToAppointmentData, parseIntake } from "@/lib/visit-intake";
 
 export async function bookAppointment(
   _previous: ActionState,
@@ -16,10 +17,13 @@ export async function bookAppointment(
   const petId = String(formData.get("petId") ?? "");
   const vetProfileId = String(formData.get("vetProfileId") ?? "");
   const startsAtRaw = String(formData.get("startsAt") ?? "");
-  const reason = String(formData.get("reason") ?? "").trim() || null;
 
   if (!petId) return fail("Choose a pet.");
   if (!vetProfileId || !startsAtRaw) return fail("Pick a time first.");
+
+  const parsed = parseIntake(formData);
+  if (!parsed.ok) return fail(parsed.error);
+  const intake = intakeToAppointmentData(parsed.intake);
 
   const startsAt = new Date(startsAtRaw);
   if (Number.isNaN(startsAt.valueOf())) return fail("Pick a time first.");
@@ -49,7 +53,7 @@ export async function bookAppointment(
 
   try {
     await prisma.appointment.create({
-      data: { petId, ownerId: user.id, vetProfileId, startsAt, endsAt, reason },
+      data: { petId, ownerId: user.id, vetProfileId, startsAt, endsAt, ...intake },
     });
   } catch (error) {
     // Two people can pass the availability check above at the same time
@@ -76,7 +80,11 @@ export async function bookInstantMatch(
 
   const petId = String(formData.get("petId") ?? "");
   const specialisationSlug = String(formData.get("specialisationSlug") ?? "") || undefined;
-  const reason = String(formData.get("reason") ?? "").trim() || null;
+
+  if (!petId) return fail("Choose a pet.");
+  const parsed = parseIntake(formData);
+  if (!parsed.ok) return fail(parsed.error);
+  const intake = intakeToAppointmentData(parsed.intake);
 
   const pet = await prisma.pet.findFirst({
     where: { id: petId, ownerId: user.id, archivedAt: null },
@@ -102,7 +110,7 @@ export async function bookInstantMatch(
           vetProfileId: vet.id,
           startsAt: nextSlot.startsAt,
           endsAt: nextSlot.endsAt,
-          reason,
+          ...intake,
           wasInstantMatch: true,
         },
       });

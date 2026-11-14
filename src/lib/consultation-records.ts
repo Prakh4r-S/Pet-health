@@ -14,6 +14,7 @@ export const consultationRecordSelect = {
   assessment: true,
   plan: true,
   followUpOn: true,
+  followUpNote: true,
   finalisedAt: true,
   prescriptions: {
     orderBy: { createdAt: "asc" },
@@ -47,6 +48,7 @@ export type ConsultationRecord = {
   assessment: string | null;
   plan: string | null;
   followUpOn: string | null;
+  followUpNote: string | null;
   finalisedAt: string | null;
   prescriptions: SelectedNote["prescriptions"];
   amendments: { id: string; body: string; createdAt: string; authorName: string | null }[];
@@ -71,6 +73,7 @@ export function toOwnerRecord(note: SelectedNote | null): ConsultationRecord | n
     assessment: note.assessment,
     plan: note.plan,
     followUpOn: note.followUpOn?.toISOString().slice(0, 10) ?? null,
+    followUpNote: note.followUpNote,
     finalisedAt: note.finalisedAt?.toISOString() ?? null,
     prescriptions: note.prescriptions,
     amendments: note.amendments.map((a) => ({

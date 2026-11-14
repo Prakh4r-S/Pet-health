@@ -355,6 +355,24 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+/// How long the owner says the problem has been going on, picked from a
+/// short list at booking. A fixed set rather than free text so the vet can
+/// read it at a glance and the schedule can sort or flag on it later.
+enum SymptomDuration {
+  TODAY
+  FEW_DAYS // 2–3 days
+  ABOUT_A_WEEK // 4–7 days
+  OVER_A_WEEK
+}
+
+/// The owner's own sense of how pressing the visit is. Not a triage
+/// decision — the vet makes that — but it tells them what to look at first.
+enum VisitUrgency {
+  ROUTINE
+  SOON
+  URGENT
+}
+
 model Appointment {
   id           String            @id @default(cuid())
   petId        String
@@ -363,7 +381,14 @@ model Appointment {
   startsAt     DateTime
   endsAt       DateTime
   status       AppointmentStatus @default(SCHEDULED)
-  reason       String?
+  // The pre-visit intake. `reason` is the primary concern / symptoms;
+  // it predates the rest of the intake and keeps its name so every
+  // existing reader of it carries on working. The other three are
+  // optional: appointments booked before the intake existed have none.
+  reason          String?
+  symptomDuration SymptomDuration?
+  urgency         VisitUrgency?
+  intakeNotes     String?
   // Set when the owner books "any available vet" rather than choosing
   // one — worth knowing when looking at how the feature gets used.
   wasInstantMatch Boolean        @default(false)
@@ -441,6 +466,9 @@ model ConsultationNote {
   assessment          String?
   plan                String?
   followUpOn          DateTime? @db.Date
+  /// What the vet recommends for follow-up, in words: "recheck if still
+  /// limping after 5 days". The date above says when; this says why.
+  followUpNote        String?
 
   // Once set, the structured fields above are frozen. Corrections go in
   // as amendments rather than edits, because a clinical record that can

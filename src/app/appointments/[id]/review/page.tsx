@@ -8,6 +8,9 @@ import PatientPanel from "@/components/patient-panel";
 import NoteEditor from "@/components/note-editor";
 import LocalTime from "@/components/local-time";
 import TranscriptPanel, { type Proposal } from "@/components/transcript-panel";
+import IntakeSummary from "@/components/intake-summary";
+import { ReviewStatusStrip, getReviewStatus } from "@/components/review-status";
+import { intakeFromAppointment } from "@/lib/visit-intake";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +49,7 @@ export default async function ConsultationReviewPage({
   const appointment = await prisma.appointment.findFirst({
     where: { id, vetProfile: { userId: user.id } },
     include: {
-      pet: { select: { id: true, name: true } },
+      pet: { select: { id: true, name: true, species: { select: { name: true } } } },
       owner: { select: { name: true } },
       recording: true,
       documents: { orderBy: { createdAt: "desc" } },
@@ -66,24 +69,106 @@ export default async function ConsultationReviewPage({
 
   const patient = await getPatientSummary(appointment.pet.id);
 
+  const recording = appointment.recording;
+  const stalled = recording ? isTranscriptionStale(recording) : false;
+  const proposal = (recording?.extraction as Proposal | null) ?? null;
+  const note = appointment.note;
+  const status = getReviewStatus({
+    noteStatus: note?.status ?? null,
+    assessment: note?.assessment ?? null,
+    recordingStatus: recording?.status ?? null,
+    recordingStalled: stalled,
+  });
+
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-6 py-8">
       <Link href="/vet/appointments" className="text-sm text-ink-soft hover:underline">
         Back to schedule
       </Link>
 
       <header className="mb-6 mt-3">
-        <h1 className="text-2xl text-navy-900">{appointment.pet.name}</h1>
+        <h1 className="text-2xl text-navy-900">
+          {appointment.pet.name}
+          <span className="text-base font-normal text-ink-soft">
+            {" "}
+            · {appointment.pet.species.name}
+          </span>
+        </h1>
         <p className="text-sm text-ink-soft">
           Consultation on{" "}
           <LocalTime date={appointment.startsAt.toISOString()} format="dayTime" />
           {appointment.owner.name && ` · owner: ${appointment.owner.name}`}
-          {appointment.reason && ` · ${appointment.reason}`}
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div className="grid gap-6">
+      <div className="mb-6 grid gap-4">
+        <ReviewStatusStrip status={status} hasRecording={Boolean(recording)} />
+        <IntakeSummary
+          intake={intakeFromAppointment(appointment)}
+          petName={appointment.pet.name}
+          species={appointment.pet.species.name}
+          ownerName={appointment.owner.name}
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <NoteEditor
+          appointmentId={appointment.id}
+          petName={appointment.pet.name}
+          ownerName={appointment.owner.name}
+          ownerConcern={appointment.reason}
+          suggestedMedications={recording?.status === "TRANSCRIBED" ? (proposal?.medications ?? []) : []}
+          transcribing={status === "TRANSCRIBING"}
+          note={{
+            status: note?.status ?? "DRAFT",
+            scratch: note?.scratch ?? null,
+            presentingComplaint: note?.presentingComplaint ?? null,
+            examination: note?.examination ?? null,
+            assessment: note?.assessment ?? null,
+            plan: note?.plan ?? null,
+            followUpOn: note?.followUpOn?.toISOString().slice(0, 10) ?? null,
+            followUpNote: note?.followUpNote ?? null,
+            finalisedAt: note?.finalisedAt?.toISOString() ?? null,
+            prescriptions:
+              note?.prescriptions.map((p) => ({
+                id: p.id,
+                drug: p.drug,
+                dose: p.dose,
+                frequency: p.frequency,
+                durationDays: p.durationDays,
+                instructions: p.instructions,
+              })) ?? [],
+            amendments:
+              note?.amendments.map((a) => ({
+                id: a.id,
+                body: a.body,
+                createdAt: a.createdAt.toISOString().slice(0, 16).replace("T", " "),
+                authorName: a.author.name,
+              })) ?? [],
+          }}
+        />
+
+        {/* The AI output sits beside the record it feeds, not above it:
+            the vet reads a suggestion and the field it would go into in
+            one glance. */}
+        <aside className="grid h-fit gap-6">
+          <TranscriptPanel
+            appointmentId={appointment.id}
+            noteLocked={note?.status === "FINALISED"}
+            recording={
+              recording
+                ? {
+                    status: recording.status,
+                    stalled,
+                    durationSeconds: recording.durationSeconds,
+                    transcript: recording.transcript,
+                    extraction: proposal,
+                    error: recording.error,
+                  }
+                : null
+            }
+          />
+
           <section className="rounded-lg border border-mist p-5">
             <h2 className="mb-4 font-medium">From this consultation</h2>
             {appointment.documents.length === 0 ? (
@@ -91,7 +176,7 @@ export default async function ConsultationReviewPage({
                 No snapshots or documents were captured during this call.
               </p>
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul className="grid gap-3">
                 {appointment.documents.map((d) => (
                   <li key={d.id} className="rounded-md border border-mist p-3">
                     <a
@@ -113,56 +198,10 @@ export default async function ConsultationReviewPage({
               </ul>
             )}
           </section>
-          <TranscriptPanel
-            appointmentId={appointment.id}
-            noteLocked={appointment.note?.status === "FINALISED"}
-            recording={
-              appointment.recording
-                ? {
-                    status: appointment.recording.status,
-                    stalled: isTranscriptionStale(appointment.recording),
-                    durationSeconds: appointment.recording.durationSeconds,
-                    transcript: appointment.recording.transcript,
-                    extraction: (appointment.recording.extraction as Proposal | null) ?? null,
-                    error: appointment.recording.error,
-                  }
-                : null
-            }
-          />
-          <NoteEditor
-            appointmentId={appointment.id}
-            note={{
-              status: appointment.note?.status ?? "DRAFT",
-              scratch: appointment.note?.scratch ?? null,
-              presentingComplaint: appointment.note?.presentingComplaint ?? null,
-              examination: appointment.note?.examination ?? null,
-              assessment: appointment.note?.assessment ?? null,
-              plan: appointment.note?.plan ?? null,
-              followUpOn:
-                appointment.note?.followUpOn?.toISOString().slice(0, 10) ?? null,
-              finalisedAt: appointment.note?.finalisedAt?.toISOString() ?? null,
-              prescriptions:
-                appointment.note?.prescriptions.map((p) => ({
-                  id: p.id,
-                  drug: p.drug,
-                  dose: p.dose,
-                  frequency: p.frequency,
-                  durationDays: p.durationDays,
-                  instructions: p.instructions,
-                })) ?? [],
-              amendments:
-                appointment.note?.amendments.map((a) => ({
-                  id: a.id,
-                  body: a.body,
-                  createdAt: a.createdAt.toISOString().slice(0, 16).replace("T", " "),
-                  authorName: a.author.name,
-                })) ?? [],
-            }}
-          />
-        </div>
 
-        <aside className="h-fit overflow-hidden rounded-lg border border-mist">
-          <PatientPanel patient={patient} />
+          <div className="overflow-hidden rounded-lg border border-mist">
+            <PatientPanel patient={patient} />
+          </div>
         </aside>
       </div>
     </main>

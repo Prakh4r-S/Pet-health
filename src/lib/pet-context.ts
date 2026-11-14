@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getVaccineStandings } from "@/lib/vaccine-status";
+import { DURATION_LABELS } from "@/lib/visit-intake";
 
 /**
  * Assembles everything the assistant is allowed to know, for one owner.
@@ -103,6 +104,10 @@ export async function buildOwnerContext(userId: string): Promise<string> {
         const parts = [`- ${when} with ${vet} (${appointment.status.toLowerCase()})`];
 
         if (appointment.reason) parts.push(`  Reason given when booking: ${appointment.reason}`);
+        if (appointment.symptomDuration) {
+          parts.push(`  Going on for: ${DURATION_LABELS[appointment.symptomDuration]}`);
+        }
+        if (appointment.intakeNotes) parts.push(`  Owner's notes: ${appointment.intakeNotes}`);
 
         // Only finalised notes are included. A draft is the vet's work in
         // progress and may contain machine-proposed text they have not
@@ -117,6 +122,7 @@ export async function buildOwnerContext(userId: string): Promise<string> {
           if (note.followUpOn) {
             parts.push(`  Follow-up date: ${note.followUpOn.toISOString().slice(0, 10)}`);
           }
+          if (note.followUpNote) parts.push(`  Follow-up recommendation: ${note.followUpNote}`);
           for (const p of note.prescriptions) {
             parts.push(
               `  Prescribed: ${p.drug} ${p.dose} ${p.frequency}` +

@@ -6,6 +6,8 @@ import { createJoinToken } from "@/lib/livekit";
 import { getPatientSummary } from "@/lib/patient-summary";
 import ConsultationWorkspace from "@/components/consultation-workspace";
 import LocalTime from "@/components/local-time";
+import IntakeSummary from "@/components/intake-summary";
+import { intakeFromAppointment } from "@/lib/visit-intake";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +73,7 @@ export default async function ConsultationRoomPage({
     include: {
       pet: { select: { id: true, name: true, species: { select: { name: true } } } },
       vetProfile: { include: { user: { select: { name: true } } } },
+      owner: { select: { name: true } },
     },
   });
 
@@ -98,8 +101,19 @@ export default async function ConsultationRoomPage({
           {access.isVet
             ? "Consultation"
             : `With ${appointment.vetProfile.user.name ?? "your vet"}`}
-          {appointment.reason && ` · ${appointment.reason}`}
         </p>
+      </div>
+
+      {/* Above the call, not tucked into a panel: the vet should have read
+          this before they say hello. */}
+      <div className="mb-4">
+        <IntakeSummary
+          intake={intakeFromAppointment(appointment)}
+          petName={appointment.pet.name}
+          species={appointment.pet.species.name}
+          ownerName={access.isVet ? appointment.owner.name : null}
+          heading={access.isVet ? "Pre-visit brief" : "What you told the vet"}
+        />
       </div>
 
       <ConsultationWorkspace

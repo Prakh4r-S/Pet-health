@@ -1,8 +1,5 @@
 import { requestTranscription } from "@/app/appointments/[id]/recording-actions";
-import {
-  acceptProposedField,
-  acceptProposedMedication,
-} from "@/app/appointments/[id]/proposal-actions";
+import { acceptProposedField } from "@/app/appointments/[id]/proposal-actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
@@ -44,7 +41,54 @@ const FIELD_LABELS: Record<string, string> = {
   examination: "Examination",
   assessment: "Assessment",
   plan: "Plan",
+  followUpNote: "Follow-up recommendation",
 };
+
+/** The panel's own state, in the same badge style as the record's. */
+const RECORDING_BADGE: Record<
+  NonNullable<RecordingData>["status"] | "STALLED",
+  { text: string; className: string }
+> = {
+  UPLOADED: { text: "NOT TRANSCRIBED", className: "bg-mist text-ink border-mist-deep" },
+  TRANSCRIBING: {
+    text: "TRANSCRIBING",
+    className: "bg-amber-50 text-amber-900 border-amber-200",
+  },
+  STALLED: { text: "STALLED", className: "bg-amber-50 text-amber-900 border-amber-200" },
+  TRANSCRIBED: { text: "READY", className: "bg-aqua-100 text-navy-900 border-aqua-400" },
+  FAILED: { text: "FAILED", className: "bg-red-50 text-red-900 border-red-200" },
+};
+
+function PanelHeader({ recording }: { recording: RecordingData }) {
+  const badge = recording
+    ? RECORDING_BADGE[
+        recording.status === "TRANSCRIBING" && recording.stalled ? "STALLED" : recording.status
+      ]
+    : null;
+  return (
+    <div className="mb-4 flex items-center justify-between gap-2">
+      <div>
+        <h2 className="font-medium">AI draft from recording</h2>
+        {recording?.durationSeconds ? (
+          <p className="text-xs text-ink-soft">
+            {Math.floor(recording.durationSeconds / 60)}m {recording.durationSeconds % 60}s
+            recorded
+          </p>
+        ) : null}
+      </div>
+      {badge && (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${badge.className}`}
+        >
+          {recording?.status === "TRANSCRIBING" && !recording.stalled && (
+            <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-amber-600" />
+          )}
+          {badge.text}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function ProposedField({
   appointmentId,
@@ -86,7 +130,7 @@ export default function TranscriptPanel({
   if (!recording) {
     return (
       <section className="rounded-lg border border-mist p-5">
-        <h2 className="mb-2 font-medium">Draft from recording</h2>
+        <PanelHeader recording={recording} />
         <p className="text-sm text-ink-faint">
           No audio was recorded for this consultation.
         </p>
@@ -98,14 +142,7 @@ export default function TranscriptPanel({
 
   return (
     <section className="rounded-lg border border-mist p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-medium">Draft from recording</h2>
-        {recording.durationSeconds && (
-          <span className="text-xs text-ink-soft">
-            {Math.floor(recording.durationSeconds / 60)}m {recording.durationSeconds % 60}s
-          </span>
-        )}
-      </div>
+      <PanelHeader recording={recording} />
 
       {recording.status === "UPLOADED" && (
         <ActionForm action={requestTranscription}>
@@ -123,7 +160,8 @@ export default function TranscriptPanel({
 
       {recording.status === "TRANSCRIBING" && !recording.stalled && (
         <p className="text-sm text-ink-soft">
-          Transcribing. This can take up to a minute. Reload the page to check.
+          Transcribing. This can take up to a minute. Reload the page to check —
+          you can keep writing the record meanwhile.
         </p>
       )}
 
@@ -197,73 +235,24 @@ export default function TranscriptPanel({
                 name="plan"
                 value={proposal.plan}
               />
+              <ProposedField
+                appointmentId={appointmentId}
+                name="followUpNote"
+                value={proposal.follow_up}
+              />
             </div>
           )}
 
           {proposal.medications.length > 0 && !noteLocked && (
-            <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
-                Medications mentioned
-              </h3>
-              <div className="grid gap-3">
-                {proposal.medications.map((m, i) => (
-                  <ActionForm
-                    key={i}
-                    action={acceptProposedMedication}
-                    className="rounded-md border border-mist p-3"
-                  >
-                    <input type="hidden" name="appointmentId" value={appointmentId} />
-                    <div className="flex flex-wrap items-end gap-2">
-                      <div className="w-36">
-                        <label className="mb-1 block text-xs text-ink-soft">Drug</label>
-                        <input name="drug" className={field} defaultValue={m.drug} required />
-                      </div>
-                      <div className="w-24">
-                        <label className="mb-1 block text-xs text-ink-soft">Dose</label>
-                        <input
-                          name="dose"
-                          className={field}
-                          defaultValue={m.dose ?? ""}
-                          placeholder="not stated"
-                          required
-                        />
-                      </div>
-                      <div className="w-32">
-                        <label className="mb-1 block text-xs text-ink-soft">Frequency</label>
-                        <input
-                          name="frequency"
-                          className={field}
-                          defaultValue={m.frequency ?? ""}
-                          placeholder="not stated"
-                          required
-                        />
-                      </div>
-                      <div className="w-20">
-                        <label className="mb-1 block text-xs text-ink-soft">Days</label>
-                        <input
-                          name="durationDays"
-                          type="number"
-                          min="1"
-                          className={field}
-                          defaultValue={m.duration_days ?? ""}
-                        />
-                      </div>
-                      <SubmitButton pendingLabel="Adding..." className={smallButton}>
-                        Prescribe
-                      </SubmitButton>
-                    </div>
-                    {m.evidence && (
-                      /* The sentence the drug was named in. Checking a
-                         dose against what was actually said is real
-                         verification; accepting a bare field is not. */
-                      <p className="mt-2 text-xs italic text-ink-soft">
-                        Heard: “{m.evidence}”
-                      </p>
-                    )}
-                  </ActionForm>
-                ))}
-              </div>
-            </div>
+            /* Medications are drafted into the Prescriptions section,
+               next to the list they would join, rather than here. */
+            <a
+              href="#prescriptions"
+              className="rounded-md border border-aqua-100 bg-aqua-50 px-3 py-2 text-sm text-navy-900 hover:underline"
+            >
+              {proposal.medications.length} medication
+              {proposal.medications.length === 1 ? "" : "s"} drafted under Prescriptions →
+            </a>
           )}
 
           {recording.transcript && (

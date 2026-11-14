@@ -25,7 +25,7 @@ export default async function VetDetailPage({
   const [pets, slots] = await Promise.all([
     prisma.pet.findMany({
       where: { ownerId: user.id, archivedAt: null },
-      select: { id: true, name: true },
+      select: { id: true, name: true, species: { select: { name: true } } },
       orderBy: { name: "asc" },
     }),
     getAvailableSlots(vet.id),
@@ -57,7 +57,7 @@ export default async function VetDetailPage({
         <h2 className="mb-4 font-medium">Book an appointment</h2>
         <SlotPicker
           vetProfileId={vet.id}
-          pets={pets}
+          pets={pets.map((p) => ({ id: p.id, name: p.name, species: p.species.name }))}
           slots={slots.map((s) => s.startsAt.toISOString())}
         />
       </section>
