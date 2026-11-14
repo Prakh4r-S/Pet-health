@@ -7,6 +7,11 @@ import { getVaccineStandings, type VaccineStatus } from "@/lib/vaccine-status";
 import { logVaccination, logWeight } from "./actions";
 import WeightChart from "@/components/weight-chart";
 import DocumentsSection from "@/components/documents-section";
+import PetEditForm from "@/components/pet-edit-form";
+import PetMedicalHistory from "@/components/pet-medical-history";
+import ConsultationRecordView from "@/components/consultation-record";
+import LocalTime from "@/components/local-time";
+import { consultationRecordSelect, toOwnerRecord } from "@/lib/consultation-records";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
@@ -23,6 +28,10 @@ const statusStyles: Record<VaccineStatus, { label: string; className: string }> 
 
 function fmt(d: Date | null) {
   return d ? d.toISOString().slice(0, 10) : "—";
+}
+
+function fmtOrNull(d: Date | null) {
+  return d ? d.toISOString().slice(0, 10) : null;
 }
 
 export default async function PetDetailPage({
@@ -54,13 +63,50 @@ export default async function PetDetailPage({
     },
   });
 
-  const [standings, vaccineTypes] = await Promise.all([
+  const [standings, vaccineTypes, breeds, pastAppointments] = await Promise.all([
     getVaccineStandings(pet.id),
     prisma.vaccineType.findMany({
       where: { speciesId: pet.speciesId },
       orderBy: [{ isCore: "desc" }, { name: "asc" }],
     }),
+    access.canEdit
+      ? prisma.breed.findMany({
+          where: { speciesId: pet.speciesId },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        })
+      : [],
+    // Fetched for the owner only; see the section below for why.
+    access.role === "OWNER"
+      ? prisma.appointment.findMany({
+          where: { petId: pet.id, note: { status: "FINALISED" } },
+          orderBy: { startsAt: "desc" },
+          take: 20,
+          select: {
+            id: true,
+            startsAt: true,
+            reason: true,
+            vetProfile: { select: { user: { select: { name: true } } } },
+            note: { select: consultationRecordSelect },
+          },
+        })
+      : [],
   ]);
+
+  const consultations = pastAppointments.flatMap((a) => {
+    const record = toOwnerRecord(a.note);
+    return record
+      ? [
+          {
+            id: a.id,
+            startsAt: a.startsAt.toISOString(),
+            reason: a.reason,
+            vetName: a.vetProfile.user.name,
+            record,
+          },
+        ]
+      : [];
+  });
 
   const chartData = pet.weights.map((w) => ({
     date: w.measuredAt.toISOString().slice(5, 10),
@@ -89,7 +135,10 @@ export default async function PetDetailPage({
           {pet.species.name}
           {" · "}
           {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}
+          {pet.sex !== "UNKNOWN" && ` · ${pet.sex.toLowerCase()}`}
+          {pet.neutered === true && " · neutered"}
           {latestWeight && ` · ${Number(latestWeight.weightKg)} kg`}
+          {pet.microchipNumber && ` · chip ${pet.microchipNumber}`}
           {isVet && ` · owner: ${pet.owner.name ?? "—"}`}
         </p>
       </header>
@@ -108,23 +157,66 @@ export default async function PetDetailPage({
         </div>
       )}
 
-      {(pet.allergies.length > 0 || pet.conditions.length > 0) && (
+      {access.canEdit && (
+        <PetEditForm
+          breeds={breeds}
+          pet={{
+            id: pet.id,
+            name: pet.name,
+            speciesName: pet.species.name,
+            breedId: pet.breedId,
+            breedFreeText: pet.breedFreeText,
+            sex: pet.sex,
+            neutered: pet.neutered,
+            microchipNumber: pet.microchipNumber,
+            birthDate: fmtOrNull(pet.birthDate),
+            birthDateIsApprox: pet.birthDateIsApprox,
+          }}
+        />
+      )}
+
+      <PetMedicalHistory
+        petId={pet.id}
+        canEdit={access.canEdit}
+        allergies={pet.allergies.map((a) => ({
+          id: a.id,
+          allergen: a.allergen,
+          reaction: a.reaction,
+          severity: a.severity,
+        }))}
+        conditions={pet.conditions.map((c) => ({
+          id: c.id,
+          name: c.name,
+          notes: c.notes,
+          diagnosedOn: fmtOrNull(c.diagnosedOn),
+          resolvedOn: fmtOrNull(c.resolvedOn),
+        }))}
+      />
+
+      {/* The owner's own copy of what each vet concluded and prescribed.
+          Owner only: a treating vet's access here is to the pet's
+          records as the owner keeps them, and whether one vet should
+          read another's notes is a decision this page does not make. */}
+      {access.role === "OWNER" && (
         <section className={`${card} mb-6`}>
-          <h2 className="mb-3 font-medium">Medical history</h2>
-          {pet.allergies.length > 0 && (
-            <p className="mb-2 text-sm">
-              <span className="text-gray-500">Allergies: </span>
-              {pet.allergies.map((a) => a.allergen).join(", ")}
+          <h2 className="mb-1 font-medium">Consultation records</h2>
+          {consultations.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-400">
+              Nothing yet. A record appears here once a vet has finalised their
+              notes after a consultation.
             </p>
-          )}
-          {pet.conditions.length > 0 && (
-            <ul className="text-sm">
-              {pet.conditions.map((c) => (
-                <li key={c.id} className="text-gray-700">
-                  {c.name}
-                  <span className="text-gray-500">
-                    {c.resolvedOn ? " · resolved" : " · ongoing"}
-                  </span>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {consultations.map((c) => (
+                <li key={c.id} className="py-4">
+                  <p className="mb-3 text-sm">
+                    <span className="font-medium">
+                      <LocalTime date={c.startsAt} format="dayTime" />
+                    </span>
+                    <span className="text-gray-600"> · {c.vetName ?? "Vet"}</span>
+                    {c.reason && <span className="text-gray-500"> · {c.reason}</span>}
+                  </p>
+                  <ConsultationRecordView record={c.record} />
                 </li>
               ))}
             </ul>

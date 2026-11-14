@@ -7,6 +7,8 @@ import {
   JOIN_WINDOW_BEFORE_MINUTES,
 } from "@/lib/consultation-room";
 import LocalTime from "@/components/local-time";
+import ConsultationRecordView from "@/components/consultation-record";
+import { consultationRecordSelect, toOwnerRecord } from "@/lib/consultation-records";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
@@ -51,7 +53,7 @@ export default async function AppointmentsPage() {
         ownerId: user.id,
         OR: [{ status: { not: "SCHEDULED" } }, { endsAt: { lt: cutoff } }],
       },
-      include,
+      include: { ...include, note: { select: consultationRecordSelect } },
       orderBy: { startsAt: "desc" },
       take: PAST_LIMIT,
     }),
@@ -138,23 +140,44 @@ export default async function AppointmentsPage() {
           <ul className="grid gap-2">
             {past.map((a) => {
               const label = pastLabels[a.status];
+              // Null unless the vet has finalised it — a draft is not
+              // shown, however far along it is.
+              const record = toOwnerRecord(a.note);
               return (
-                <li
-                  key={a.id}
-                  className="flex items-start justify-between gap-4 rounded-md border border-gray-100 p-3 text-sm"
-                >
-                  <div>
-                    <p>
-                      <span className="text-gray-500">
-                        <LocalTime date={a.startsAt.toISOString()} />
-                      </span>
-                      {" · "}
-                      {a.pet.name} with {a.vetProfile.user.name ?? "vet"}
-                    </p>
-                    {a.reason && <p className="mt-0.5 text-xs text-gray-500">{a.reason}</p>}
+                <li key={a.id} className="rounded-md border border-gray-100 p-3 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p>
+                        <span className="text-gray-500">
+                          <LocalTime date={a.startsAt.toISOString()} />
+                        </span>
+                        {" · "}
+                        {a.pet.name} with {a.vetProfile.user.name ?? "vet"}
+                      </p>
+                      {a.reason && <p className="mt-0.5 text-xs text-gray-500">{a.reason}</p>}
+                    </div>
+                    {label && (
+                      <span className={`shrink-0 text-xs ${label.className}`}>{label.text}</span>
+                    )}
                   </div>
-                  {label && (
-                    <span className={`shrink-0 text-xs ${label.className}`}>{label.text}</span>
+
+                  {record ? (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer select-none text-sm text-pine-700 hover:text-pine-900">
+                        View the vet&apos;s record
+                        {record.prescriptions.length > 0 &&
+                          ` · ${record.prescriptions.length} prescribed`}
+                      </summary>
+                      <div className="mt-3 rounded-md border border-gray-100 p-4">
+                        <ConsultationRecordView record={record} />
+                      </div>
+                    </details>
+                  ) : (
+                    a.status !== "CANCELLED" && (
+                      <p className="mt-1 text-xs text-gray-400">
+                        The vet hasn&apos;t finalised a record for this consultation yet.
+                      </p>
+                    )
                   )}
                 </li>
               );

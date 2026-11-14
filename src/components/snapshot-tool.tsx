@@ -1,11 +1,53 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Track } from "livekit-client";
 import { useTracks, useLocalParticipant } from "@livekit/components-react";
-import { saveSnapshot } from "@/app/appointments/[id]/snapshot-actions";
+import { listSnapshots, saveSnapshot } from "@/app/appointments/[id]/snapshot-actions";
 
 type Stroke = { x: number; y: number }[];
+type SavedSnapshot = { id: string; title: string; takenAt: string };
+
+/**
+ * The snapshots already saved from this consultation.
+ *
+ * Without this, a saved snapshot simply vanishes from the vet's view —
+ * the only confirmation is a line of text, and there is no way to look
+ * at one again until the call is over. Each opens in a new tab, because
+ * navigating this one would end the call.
+ */
+function SnapshotStrip({ snapshots }: { snapshots: SavedSnapshot[] }) {
+  if (snapshots.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <p className="text-xs text-gray-500">
+        Saved this consultation ({snapshots.length})
+      </p>
+      <ul className="mt-1 flex flex-wrap gap-2">
+        {snapshots.map((s) => (
+          <li key={s.id}>
+            <a
+              href={`/api/documents/${s.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block max-w-48 truncate rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs hover:border-gray-400"
+              title={s.title}
+            >
+              {s.title}
+              <span className="ml-1.5 text-gray-400">
+                {new Date(s.takenAt).toLocaleTimeString(undefined, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function SnapshotTool({
   appointmentId,
@@ -23,6 +65,31 @@ export default function SnapshotTool({
   const [drawing, setDrawing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [saved, setSaved] = useState<SavedSnapshot[]>([]);
+
+  // Loaded on mount so a vet who rejoins a call sees what they had
+  // already captured, and again after each save. A failure is ignored:
+  // the strip is a convenience, and the snapshots are saved regardless.
+  useEffect(() => {
+    let current = true;
+    listSnapshots(appointmentId).then(
+      (snapshots) => {
+        if (current) setSaved(snapshots);
+      },
+      () => {},
+    );
+    return () => {
+      current = false;
+    };
+  }, [appointmentId]);
+
+  const refreshSaved = async () => {
+    try {
+      setSaved(await listSnapshots(appointmentId));
+    } catch {
+      // as above
+    }
+  };
 
   // The owner's camera, not the vet's own preview.
   const remote = cameraTracks.find(
@@ -150,6 +217,7 @@ export default function SnapshotTool({
       setCaptured(null);
       setStrokes([]);
       setMessage("Saved to the patient's record.");
+      void refreshSaved();
     } catch {
       setMessage("Could not save the snapshot. Try again.");
     } finally {
@@ -159,15 +227,18 @@ export default function SnapshotTool({
 
   if (!captured) {
     return (
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => void capture()}
-          className="rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium shadow hover:bg-white"
-        >
-          Take snapshot
-        </button>
-        {message && <span className="text-xs text-gray-600">{message}</span>}
+      <div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void capture()}
+            className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50"
+          >
+            Take snapshot
+          </button>
+          {message && <span className="text-xs text-gray-600">{message}</span>}
+        </div>
+        <SnapshotStrip snapshots={saved} />
       </div>
     );
   }
@@ -202,6 +273,7 @@ export default function SnapshotTool({
         onSave={save}
       />
       {message && <p className="mt-2 text-xs text-gray-600">{message}</p>}
+      <SnapshotStrip snapshots={saved} />
     </div>
   );
 }
