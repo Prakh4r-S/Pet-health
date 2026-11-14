@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { fail, type ActionState } from "@/lib/action-result";
+import { parseImageField } from "@/lib/upload-rules";
 
 const SEXES = ["MALE", "FEMALE", "UNKNOWN"] as const;
 type Sex = (typeof SEXES)[number];
@@ -24,6 +25,9 @@ export async function createPet(_previous: ActionState, formData: FormData): Pro
   // HTML `required` attributes are a convenience, not a guarantee.
   if (!name) return fail("Name is required.");
   if (!speciesId) return fail("Species is required.");
+
+  const photoUrl = parseImageField(formData.get("photoUrl"));
+  if (photoUrl === false) return fail("That photo could not be used. Upload it again.");
 
   const sex: Sex = (SEXES as readonly string[]).includes(sexRaw) ? (sexRaw as Sex) : "UNKNOWN";
 
@@ -57,6 +61,7 @@ export async function createPet(_previous: ActionState, formData: FormData): Pro
       sex,
       birthDate,
       birthDateIsApprox,
+      photoUrl,
     },
   });
 

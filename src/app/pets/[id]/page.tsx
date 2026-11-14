@@ -16,6 +16,7 @@ import LocalTime from "@/components/local-time";
 import { consultationRecordSelect, toOwnerRecord } from "@/lib/consultation-records";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import PetAvatar from "@/components/pet-avatar";
 
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
@@ -136,18 +137,26 @@ export default async function PetDetailPage({
         {isVet ? "Back to schedule" : "Back to pets"}
       </Link>
 
-      <header className="mb-8 mt-3">
-        <h1 className="text-2xl text-navy-900">{pet.name}</h1>
-        <p className="text-sm text-ink-soft">
-          {pet.species.name}
-          {" · "}
-          {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}
-          {pet.sex !== "UNKNOWN" && ` · ${pet.sex.toLowerCase()}`}
-          {pet.neutered === true && " · neutered"}
-          {latestWeight && ` · ${Number(latestWeight.weightKg)} kg`}
-          {pet.microchipNumber && ` · chip ${pet.microchipNumber}`}
-          {isVet && ` · owner: ${pet.owner.name ?? "—"}`}
-        </p>
+      <header className="mb-8 mt-3 flex items-center gap-4">
+        <PetAvatar
+          name={pet.name}
+          speciesSlug={pet.species.slug}
+          photoUrl={pet.photoUrl}
+          size="lg"
+        />
+        <div className="min-w-0">
+          <h1 className="text-2xl text-navy-900">{pet.name}</h1>
+          <p className="text-sm text-ink-soft">
+            {pet.species.name}
+            {" · "}
+            {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}
+            {pet.sex !== "UNKNOWN" && ` · ${pet.sex.toLowerCase()}`}
+            {pet.neutered === true && " · neutered"}
+            {latestWeight && ` · ${Number(latestWeight.weightKg)} kg`}
+            {pet.microchipNumber && ` · chip ${pet.microchipNumber}`}
+            {isVet && ` · owner: ${pet.owner.name ?? "—"}`}
+          </p>
+        </div>
       </header>
 
       {isVet && (
@@ -178,6 +187,7 @@ export default async function PetDetailPage({
             microchipNumber: pet.microchipNumber,
             birthDate: fmtOrNull(pet.birthDate),
             birthDateIsApprox: pet.birthDateIsApprox,
+            photoUrl: pet.photoUrl,
           }}
         />
       )}

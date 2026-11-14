@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
+import PetAvatar from "@/components/pet-avatar";
 
 
 function describeAge(birthDate: Date | null, approx: boolean) {
@@ -53,17 +54,24 @@ export default async function PetsPage() {
       ) : (
         <ul className="grid gap-3">
           {pets.map((pet) => (
-            <li key={pet.id} className="rounded-md border border-mist p-4">
-              <Link href={`/pets/${pet.id}`} className="font-medium hover:underline">
-                {pet.name}
-              </Link>
-              <p className="text-sm text-ink-soft">
-                {pet.species.name}
-                {" · "}
-                {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}
-                {" · "}
-                {describeAge(pet.birthDate, pet.birthDateIsApprox)}
-              </p>
+            <li key={pet.id} className="flex items-center gap-4 rounded-md border border-mist p-4">
+              <PetAvatar
+                name={pet.name}
+                speciesSlug={pet.species.slug}
+                photoUrl={pet.photoUrl}
+              />
+              <div className="min-w-0">
+                <Link href={`/pets/${pet.id}`} className="font-medium hover:underline">
+                  {pet.name}
+                </Link>
+                <p className="text-sm text-ink-soft">
+                  {pet.species.name}
+                  {" · "}
+                  {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}
+                  {" · "}
+                  {describeAge(pet.birthDate, pet.birthDateIsApprox)}
+                </p>
+              </div>
             </li>
           ))}
         </ul>

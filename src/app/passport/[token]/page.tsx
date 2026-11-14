@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPassportView } from "@/lib/passport";
+import PetAvatar from "@/components/pet-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -75,15 +76,25 @@ export default async function PassportPage({
 
   return (
     <main className="mx-auto max-w-xl px-5 py-8">
-      <p className="text-xs font-semibold uppercase tracking-wide text-aqua-600">
-        Health passport
-      </p>
-      <h1 className="mt-1 text-3xl text-navy-900">{pet.name}</h1>
-      <p className="mt-1 text-ink-soft">
-        {pet.species}
-        {pet.breed && ` · ${pet.breed}`}
-        {age && ` · ${age}`}
-      </p>
+      <div className="flex items-center gap-4">
+        <PetAvatar
+          name={pet.name}
+          speciesSlug={pet.speciesSlug}
+          photoUrl={pet.photoUrl}
+          size="lg"
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-aqua-600">
+            Health passport
+          </p>
+          <h1 className="mt-1 text-3xl text-navy-900">{pet.name}</h1>
+          <p className="mt-1 text-ink-soft">
+            {pet.species}
+            {pet.breed && ` · ${pet.breed}`}
+            {age && ` · ${age}`}
+          </p>
+        </div>
+      </div>
 
       {/* Allergies first and unmissable: this is what changes what a
           stranger may safely give the animal. Stated even when empty —

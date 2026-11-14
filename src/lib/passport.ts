@@ -64,7 +64,9 @@ export type PassportView = NonNullable<Awaited<ReturnType<typeof getPassportView
  * This function is the access control for that page: there is no session
  * to check, so what a stranger holding the link can learn is exactly
  * what is selected here. It is built field by field for that reason —
- * no record is passed through whole — and it leaves out, deliberately:
+ * no record is passed through whole. The pet's photo is included, so
+ * that someone holding the link can tell which animal it describes. Left
+ * out, deliberately:
  *
  *   - documents, snapshots and recordings
  *   - consultation notes, transcripts and amendments
@@ -95,7 +97,8 @@ export async function getPassportView(token: string) {
           neutered: true,
           microchipNumber: true,
           breedFreeText: true,
-          species: { select: { name: true } },
+          photoUrl: true,
+          species: { select: { name: true, slug: true } },
           breed: { select: { name: true } },
           owner: { select: { name: true } },
           weights: {
@@ -163,6 +166,8 @@ export async function getPassportView(token: string) {
   return {
     name: pet.name,
     species: pet.species.name,
+    speciesSlug: pet.species.slug,
+    photoUrl: pet.photoUrl,
     breed: pet.breed?.name ?? pet.breedFreeText ?? null,
     sex: pet.sex,
     neutered: pet.neutered,

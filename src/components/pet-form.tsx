@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createPet } from "@/app/pets/actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import ImageUploadField from "@/components/image-upload-field";
 
 
 type Breed = { id: string; name: string };
@@ -18,6 +19,12 @@ export default function PetForm({ species }: { species: Species[] }) {
 
   return (
     <ActionForm action={createPet} className="grid gap-5">
+      <ImageUploadField
+        name="photoUrl"
+        label="Photo (optional)"
+        request={{ kind: "image", purpose: "pet-photo" }}
+      />
+
       <div>
         <label className={label} htmlFor="name">Name</label>
         <input id="name" name="name" className={field} required autoFocus />

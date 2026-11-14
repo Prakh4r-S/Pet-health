@@ -6,6 +6,7 @@ import { uploadImage } from "@/lib/client-upload";
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_BYTES,
+  isUploadedImageUrl,
   type ImageUploadRequest,
 } from "@/lib/upload-rules";
 
@@ -40,6 +41,7 @@ export default function ImageUploadField({
   request,
   variant = "avatar",
   defaultValue = null,
+  fallbackUrl = null,
   alt = "",
   onUploadingChange,
 }: {
@@ -51,6 +53,12 @@ export default function ImageUploadField({
   variant?: "avatar" | "banner";
   /** The photo already saved, if any. */
   defaultValue?: string | null;
+  /**
+   * Shown while the field is empty, and never submitted — the picture a
+   * sign-in provider supplied, say, which is what will appear elsewhere
+   * until the user uploads their own.
+   */
+  fallbackUrl?: string | null;
   alt?: string;
   /** For a parent that wants to disable its own controls during an upload. */
   onUploadingChange?: (uploading: boolean) => void;
@@ -129,7 +137,7 @@ export default function ImageUploadField({
     setUpload({ phase: "idle" });
   };
 
-  const shown = previewUrl ?? url;
+  const shown = previewUrl ?? (url || fallbackUrl || "");
   const frame =
     variant === "avatar"
       ? "h-24 w-24 shrink-0 rounded-full"
@@ -148,8 +156,10 @@ export default function ImageUploadField({
             alt={alt}
             fill
             sizes={variant === "avatar" ? "96px" : "(min-width: 768px) 672px, 100vw"}
-            // A local blob: preview cannot be fetched by the optimiser.
-            unoptimized={shown.startsWith("blob:")}
+            // Only our own uploads go through the optimiser: it cannot
+            // fetch a local blob: preview, and refuses any host that
+            // next.config.ts does not list.
+            unoptimized={!isUploadedImageUrl(shown)}
             className={`object-cover ${uploading ? "opacity-50" : ""}`}
           />
         ) : (

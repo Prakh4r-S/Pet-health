@@ -66,6 +66,9 @@ export default async function SiteHeader() {
             <Link href="/assistant" className="hover:text-navy-700">
               Ask
             </Link>
+            <Link href="/profile" className="hover:text-navy-700">
+              Profile
+            </Link>
             {!isVet && (
               <Link href="/vet/onboarding" className="whitespace-nowrap text-ink-soft hover:text-navy-700">
                 Become a vet

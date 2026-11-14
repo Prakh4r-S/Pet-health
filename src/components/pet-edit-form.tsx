@@ -1,5 +1,6 @@
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import ImageUploadField from "@/components/image-upload-field";
 import { archivePet, updatePet } from "@/app/pets/[id]/actions";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
@@ -16,6 +17,7 @@ export type EditablePet = {
   microchipNumber: string | null;
   birthDate: string | null;
   birthDateIsApprox: boolean;
+  photoUrl: string | null;
 };
 
 /**
@@ -47,6 +49,16 @@ export default function PetEditForm({
           className="grid gap-4 sm:grid-cols-2"
         >
           <input type="hidden" name="petId" value={pet.id} />
+
+          <div className="sm:col-span-2">
+            <ImageUploadField
+              name="photoUrl"
+              label="Photo"
+              request={{ kind: "image", purpose: "pet-photo", petId: pet.id }}
+              defaultValue={pet.photoUrl}
+              alt={`Photo of ${pet.name}`}
+            />
+          </div>
 
           <div>
             <label className={label} htmlFor="pet-name">Name</label>
