@@ -5,10 +5,11 @@ import { getRoomAccess } from "@/lib/consultation-room";
 import { createJoinToken } from "@/lib/livekit";
 import { getPatientSummary } from "@/lib/patient-summary";
 import ConsultationWorkspace from "@/components/consultation-workspace";
+import LocalTime from "@/components/local-time";
 
 export const dynamic = "force-dynamic";
 
-function Blocked({ title, body }: { title: string; body: string }) {
+function Blocked({ title, body }: { title: string; body: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-lg px-6 py-20 text-center">
       <h1 className="text-xl font-semibold">{title}</h1>
@@ -39,10 +40,16 @@ export default async function ConsultationRoomPage({
         return (
           <Blocked
             title="Not open yet"
-            body={`This consultation opens at ${access.opensAt?.toLocaleTimeString(undefined, {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}.`}
+            body={
+              access.opensAt ? (
+                <>
+                  This consultation opens at{" "}
+                  <LocalTime date={access.opensAt.toISOString()} format="time" />.
+                </>
+              ) : (
+                "This consultation isn't open yet."
+              )
+            }
           />
         );
       case "ENDED":
