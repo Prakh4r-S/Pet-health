@@ -14,6 +14,21 @@ export const ALLOWED_CONTENT_TYPES = [
   "image/webp",
 ];
 
+/** Profile and clinic photos. Smaller than documents: these are shown, not archived. */
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/**
+ * What a photo is of. It decides where the file is stored and, for a
+ * pet's photo, whose permission is needed.
+ */
+export const IMAGE_PURPOSES = ["user-avatar", "pet-photo", "vet-avatar", "clinic-photo"] as const;
+export type ImagePurpose = (typeof IMAGE_PURPOSES)[number];
+
+export type ImageUploadRequest =
+  | { kind: "image"; purpose: "pet-photo"; petId: string }
+  | { kind: "image"; purpose: Exclude<ImagePurpose, "pet-photo"> };
+
 /** What MediaRecorder produces: webm on Chromium and Firefox, mp4 on Safari. */
 export const ALLOWED_RECORDING_TYPES = ["audio/webm", "audio/mp4"];
 
@@ -23,7 +38,8 @@ export const ALLOWED_RECORDING_TYPES = ["audio/webm", "audio/mp4"];
  */
 export type UploadRequest =
   | { kind: "document"; petId: string }
-  | { kind: "recording"; appointmentId: string };
+  | { kind: "recording"; appointmentId: string }
+  | ImageUploadRequest;
 
 /**
  * Documents and recordings live under different prefixes on purpose. An
@@ -36,6 +52,36 @@ export function documentPrefix(petId: string) {
 
 export function recordingPrefix(appointmentId: string) {
   return `recordings/${appointmentId}/`;
+}
+
+/**
+ * Photos are public, unlike everything above, and sit under a prefix of
+ * their own so that nothing meant to be private can share a path with
+ * them.
+ */
+export function imagePrefix(request: ImageUploadRequest) {
+  return request.purpose === "pet-photo"
+    ? `images/pet-photo/${request.petId}/`
+    : `images/${request.purpose}/`;
+}
+
+/**
+ * Whether a URL is one of our uploaded photos. A form field carrying a
+ * photo URL is user input like any other: a server action should check
+ * it with this before storing it, or anyone could save a link to
+ * somewhere else entirely.
+ */
+export function isUploadedImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".public.blob.vercel-storage.com") &&
+      url.pathname.startsWith("/images/")
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function safeFilename(filename: string) {

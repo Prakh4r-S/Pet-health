@@ -5,11 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { getPetAccess } from "@/lib/pet-access";
 import {
   ALLOWED_CONTENT_TYPES,
+  ALLOWED_IMAGE_TYPES,
   ALLOWED_RECORDING_TYPES,
+  IMAGE_PURPOSES,
+  MAX_IMAGE_BYTES,
   MAX_RECORDING_BYTES,
   MAX_UPLOAD_BYTES,
   documentPrefix,
+  imagePrefix,
   recordingPrefix,
+  type ImagePurpose,
   type UploadRequest,
 } from "@/lib/upload-rules";
 
@@ -24,6 +29,13 @@ function parseRequest(clientPayload: string | null): UploadRequest | null {
     }
     if (value.kind === "recording" && typeof value.appointmentId === "string") {
       return { kind: "recording", appointmentId: value.appointmentId };
+    }
+    if (value.kind === "image" && IMAGE_PURPOSES.includes(value.purpose as ImagePurpose)) {
+      const purpose = value.purpose as ImagePurpose;
+      if (purpose !== "pet-photo") return { kind: "image", purpose };
+      if (typeof value.petId === "string") {
+        return { kind: "image", purpose, petId: value.petId };
+      }
     }
   } catch {
     // fall through
@@ -67,13 +79,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported request" }, { status: 400 });
   }
 
+  // Photos go to a public store and everything else to the private one,
+  // and a store is one or the other, so the token has to be chosen before
+  // handleUpload runs. Falling back to the main token keeps a deployment
+  // whose single store is public working without extra configuration.
+  const wantsImage = parseRequest(body.payload.clientPayload)?.kind === "image";
+  const token = wantsImage
+    ? (process.env.BLOB_PUBLIC_READ_WRITE_TOKEN ?? process.env.BLOB_READ_WRITE_TOKEN)
+    : process.env.BLOB_READ_WRITE_TOKEN;
+
   try {
     const result = await handleUpload({
+      token,
       request,
       body,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         const upload = parseRequest(clientPayload);
         if (!upload) throw new Error("Invalid upload request.");
+
+        if (upload.kind === "image") {
+          // Anyone signed in may upload their own photo; a pet's photo
+          // is the owner's to set, not a treating vet's.
+          if (upload.purpose === "pet-photo") {
+            const access = await getPetAccess(upload.petId, userId);
+            if (access?.role !== "OWNER") throw new Error("Pet not found.");
+          }
+          if (!pathname.startsWith(imagePrefix(upload))) {
+            throw new Error("Invalid upload path.");
+          }
+
+          return {
+            allowedContentTypes: ALLOWED_IMAGE_TYPES,
+            maximumSizeInBytes: MAX_IMAGE_BYTES,
+            addRandomSuffix: true,
+            validUntil: Date.now() + TOKEN_TTL_MS,
+          };
+        }
 
         if (upload.kind === "document") {
           // Owner or treating vet, same rule as viewing the record.

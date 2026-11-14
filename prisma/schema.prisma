@@ -9,15 +9,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
-
 
 enum Role {
   OWNER
   VET
 }
-
 
 // ---------------------------------------------------------------
 // Accounts
@@ -32,16 +29,31 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  pets     Pet[]
-  accounts Account[]
-  sessions Session[]
-  role       Role        @default(OWNER)
-  vetProfile VetProfile?
+  // Owner profile. All optional: an account exists from first sign-in,
+  // and the profile is filled in afterwards, if at all.
+  //
+  // `avatarUrl` is a photo the user uploaded; `image` above is whatever
+  // the sign-in provider supplied and is left for the auth adapter.
+  avatarUrl  String?
+  age        Int?
+  phone      String?
+  bio        String?
+  city       String?
+  state      String?
+  postalCode String?
+  // Decimal degrees (WGS 84). Used to rank vets by distance.
+  latitude   Float?
+  longitude  Float?
+
+  pets         Pet[]
+  accounts     Account[]
+  sessions     Session[]
+  role         Role          @default(OWNER)
+  vetProfile   VetProfile?
   appointments Appointment[]
 
-  uploadedDocuments Document[] @relation("UploadedDocuments")
-  amendments NoteAmendment[]
-
+  uploadedDocuments Document[]      @relation("UploadedDocuments")
+  amendments        NoteAmendment[]
 }
 
 // ---------------------------------------------------------------
@@ -112,24 +124,24 @@ model Pet {
   birthDateIsApprox Boolean   @default(false) // rescues rarely have exact dates
   neutered          Boolean?
   microchipNumber   String?
+  // Public blob URL of an uploaded photo.
   photoUrl          String?
   archivedAt        DateTime? // soft delete: records outlive the pet
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  
 
-  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  species    Species            @relation(fields: [speciesId], references: [id])
-  breed      Breed?             @relation(fields: [breedId], references: [id])
-  weights    WeightLog[]
+  owner        User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  species      Species            @relation(fields: [speciesId], references: [id])
+  breed        Breed?             @relation(fields: [breedId], references: [id])
+  weights      WeightLog[]
   vaccinations Vaccination[]
-  allergies  Allergy[]
-  conditions MedicalCondition[]
+  allergies    Allergy[]
+  conditions   MedicalCondition[]
   appointments Appointment[]
 
-  documents Document[]
+  documents     Document[]
   prescriptions Prescription[]
-  passport PetPassport?
+  passport      PetPassport?
 
   @@index([ownerId, archivedAt])
 }
@@ -274,36 +286,53 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-
 model VetProfile {
-  id             String    @id @default(cuid())
-  userId         String    @unique
-  licenceNumber  String
-  bio            String?
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  licenceNumber   String
+  // Practitioner
+  avatarUrl       String?
+  bio             String?
+  // Free-text areas of practice, for display. The Specialisation relation
+  // below remains the curated list that search filters on.
+  specialties     String[] @default([])
   yearsExperience Int?
+  // Per consultation, in whole rupees.
+  consultationFee Int?
+
+  // Clinic / hospital
   clinicName     String?
+  clinicImageUrl String?
+  clinicAddress  String?
   city           String?
+  state          String?
+  postalCode     String?
+  // Decimal degrees (WGS 84). Used to match owners with nearby vets.
+  latitude       Float?
+  longitude      Float?
+
   // IANA name, e.g. "Asia/Kolkata". Availability below is expressed in
   // this zone; without it, a window stored as 09:00–17:00 is meaningless
   // to anyone in a different timezone.
-  timezone       String    @default("Asia/Kolkata")
-  slotMinutes    Int       @default(30)
+  timezone             String    @default("Asia/Kolkata")
+  slotMinutes          Int       @default(30)
   // Set when an admin approves the vet. Nullable because an unverified
   // vet exists but should not be bookable — a real product would check
   // the licence number against a veterinary council register here.
-  verifiedAt     DateTime?
-  acceptingNewPatients Boolean @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  verifiedAt           DateTime?
+  acceptingNewPatients Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialisations Specialisation[]
   availability    VetAvailability[]
   timeOff         VetTimeOff[]
-  appointments Appointment[]
-  @@index([verifiedAt, acceptingNewPatients])
+  appointments    Appointment[]
 
   notes ConsultationNote[]
+
+  @@index([verifiedAt, acceptingNewPatients])
 }
 
 model Specialisation {
@@ -313,6 +342,7 @@ model Specialisation {
 
   vets VetProfile[]
 }
+
 /// A recurring weekly window during which the vet takes appointments.
 ///
 /// Times are stored as minutes from midnight rather than as DateTime or
@@ -347,7 +377,6 @@ model VetTimeOff {
   @@index([vetProfileId, startsAt])
 }
 
-
 enum AppointmentStatus {
   SCHEDULED
   COMPLETED
@@ -374,13 +403,13 @@ enum VisitUrgency {
 }
 
 model Appointment {
-  id           String            @id @default(cuid())
-  petId        String
-  ownerId      String
-  vetProfileId String
-  startsAt     DateTime
-  endsAt       DateTime
-  status       AppointmentStatus @default(SCHEDULED)
+  id              String            @id @default(cuid())
+  petId           String
+  ownerId         String
+  vetProfileId    String
+  startsAt        DateTime
+  endsAt          DateTime
+  status          AppointmentStatus @default(SCHEDULED)
   // The pre-visit intake. `reason` is the primary concern / symptoms;
   // it predates the rest of the intake and keeps its name so every
   // existing reader of it carries on working. The other three are
@@ -391,28 +420,24 @@ model Appointment {
   intakeNotes     String?
   // Set when the owner books "any available vet" rather than choosing
   // one — worth knowing when looking at how the feature gets used.
-  wasInstantMatch Boolean        @default(false)
-  cancelledAt  DateTime?
-  cancelledBy  String? // user id, so "who cancelled" survives
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  wasInstantMatch Boolean           @default(false)
+  cancelledAt     DateTime?
+  cancelledBy     String? // user id, so "who cancelled" survives
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   pet        Pet        @relation(fields: [petId], references: [id], onDelete: Cascade)
   owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   vetProfile VetProfile @relation(fields: [vetProfileId], references: [id], onDelete: Cascade)
 
+  documents Document[]
+  note      ConsultationNote?
+  recording ConsultationRecording?
+
   @@index([vetProfileId, startsAt])
   @@index([ownerId, startsAt])
   @@index([petId, startsAt])
-
-  documents Document[]
-  note ConsultationNote?
-  recording ConsultationRecording?
-  
 }
-
-
-
 
 enum DocumentKind {
   LAB_REPORT
@@ -424,21 +449,21 @@ enum DocumentKind {
 }
 
 model Document {
-  id           String       @id @default(cuid())
-  petId        String
-  uploadedById String
+  id            String       @id @default(cuid())
+  petId         String
+  uploadedById  String
   appointmentId String?
-  kind         DocumentKind @default(OTHER)
-  title        String
-  note         String?
+  kind          DocumentKind @default(OTHER)
+  title         String
+  note          String?
   // Blob store pathname. The URL is derived from this when needed rather
   // than stored, because a private blob URL is only useful once signed,
   // and a signature has an expiry — persisting one would mean persisting
   // something that stops working.
-  pathname     String       @unique
-  contentType  String
-  sizeBytes    Int
-  createdAt    DateTime     @default(now())
+  pathname      String       @unique
+  contentType   String
+  sizeBytes     Int
+  createdAt     DateTime     @default(now())
 
   pet         Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
   uploadedBy  User         @relation("UploadedDocuments", fields: [uploadedById], references: [id])
@@ -499,8 +524,9 @@ model NoteAmendment {
 
   @@index([noteId, createdAt])
 }
+
 model Prescription {
-  id           String  @id @default(cuid())
+  id           String   @id @default(cuid())
   noteId       String
   petId        String
   drug         String
@@ -516,7 +542,6 @@ model Prescription {
   @@index([petId, createdAt])
 }
 
-
 enum RecordingStatus {
   UPLOADED
   TRANSCRIBING
@@ -525,13 +550,13 @@ enum RecordingStatus {
 }
 
 model ConsultationRecording {
-  id            String          @id @default(cuid())
-  appointmentId String          @unique
-  pathname      String          @unique
-  contentType   String
-  sizeBytes     Int
+  id              String          @id @default(cuid())
+  appointmentId   String          @unique
+  pathname        String          @unique
+  contentType     String
+  sizeBytes       Int
   durationSeconds Int?
-  status        RecordingStatus @default(UPLOADED)
+  status          RecordingStatus @default(UPLOADED)
 
   /// Plain text, for display and for feeding the extraction step.
   transcript String?
@@ -542,10 +567,10 @@ model ConsultationRecording {
   /// assessment, plan, medications. Stored as returned, unmodified.
   extraction Json?
 
-  error        String?
+  error         String?
   transcribedAt DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
