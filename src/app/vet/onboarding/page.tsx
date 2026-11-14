@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { createVetProfile } from "../actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 const label = "block text-sm font-medium mb-1";
@@ -27,7 +29,7 @@ export default async function VetOnboardingPage() {
         own pets&apos; records.
       </p>
 
-      <form action={createVetProfile} className="grid gap-5">
+      <ActionForm action={createVetProfile} className="grid gap-5" resetOnSuccess={false}>
         <div>
           <label className={label} htmlFor="licenceNumber">Licence number</label>
           <input id="licenceNumber" name="licenceNumber" className={field} required />
@@ -85,13 +87,8 @@ export default async function VetOnboardingPage() {
           <textarea id="bio" name="bio" rows={4} className={field} />
         </div>
 
-        <button
-          type="submit"
-          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
-        >
-          Create profile
-        </button>
-      </form>
+        <SubmitButton pendingLabel="Creating profile...">Create profile</SubmitButton>
+      </ActionForm>
     </main>
   );
 }

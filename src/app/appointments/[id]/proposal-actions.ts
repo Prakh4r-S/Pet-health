@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
+import { fail, ok, type ActionState } from "@/lib/action-result";
 
 const ACCEPTABLE_FIELDS = [
   "presentingComplaint",
@@ -12,6 +13,8 @@ const ACCEPTABLE_FIELDS = [
 ] as const;
 
 type AcceptableField = (typeof ACCEPTABLE_FIELDS)[number];
+
+const FINALISED = "This note is finalised and cannot be changed.";
 
 async function getDraftNote(appointmentId: string) {
   const user = await getCurrentUser();
@@ -28,10 +31,6 @@ async function getDraftNote(appointmentId: string) {
     create: { appointmentId, vetProfileId: appointment.vetProfileId },
   });
 
-  if (note.status === "FINALISED") {
-    throw new Error("This note is finalised and cannot be changed.");
-  }
-
   return { appointment, note };
 }
 
@@ -47,15 +46,20 @@ async function getDraftNote(appointmentId: string) {
  * stored extraction: the vet may have edited the text in the box before
  * accepting, and that edit should be what lands.
  */
-export async function acceptProposedField(formData: FormData) {
+export async function acceptProposedField(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const field = String(formData.get("field") ?? "") as AcceptableField;
   const value = String(formData.get("value") ?? "").trim();
 
+  // Not something a form can produce — the field name is a hidden input.
   if (!ACCEPTABLE_FIELDS.includes(field)) throw new Error("Unknown field.");
-  if (!value) throw new Error("Nothing to accept.");
+  if (!value) return fail("Nothing to add — the text is empty.");
 
   const { note } = await getDraftNote(appointmentId);
+  if (note.status === "FINALISED") return fail(FINALISED);
 
   // Append rather than replace when the vet has already written
   // something. Overwriting their own words with a machine's is the one
@@ -69,11 +73,16 @@ export async function acceptProposedField(formData: FormData) {
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }
 
-export async function acceptProposedMedication(formData: FormData) {
+export async function acceptProposedMedication(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   const { note, appointment } = await getDraftNote(appointmentId);
+  if (note.status === "FINALISED") return fail(FINALISED);
 
   const drug = String(formData.get("drug") ?? "").trim();
   const dose = String(formData.get("dose") ?? "").trim();
@@ -85,12 +94,12 @@ export async function acceptProposedMedication(formData: FormData) {
   // becomes a prescription, rather than being defaulted to something
   // plausible.
   if (!drug || !dose || !frequency) {
-    throw new Error("Fill in drug, dose and frequency before adding.");
+    return fail("Fill in drug, dose and frequency before adding.");
   }
 
   const durationDays = durationRaw ? Number(durationRaw) : null;
   if (durationDays !== null && (!Number.isInteger(durationDays) || durationDays < 1)) {
-    throw new Error("Duration must be a whole number of days.");
+    return fail("Duration must be a whole number of days.");
   }
 
   await prisma.prescription.create({
@@ -106,4 +115,5 @@ export async function acceptProposedMedication(formData: FormData) {
   });
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+  return ok;
 }

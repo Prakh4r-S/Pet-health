@@ -7,9 +7,11 @@ import { getVaccineStandings, type VaccineStatus } from "@/lib/vaccine-status";
 import { logVaccination, logWeight } from "./actions";
 import WeightChart from "@/components/weight-chart";
 import DocumentsSection from "@/components/documents-section";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
-const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 const card = "rounded-lg border border-gray-200 p-5";
 
 const statusStyles: Record<VaccineStatus, { label: string; className: string }> = {
@@ -145,7 +147,7 @@ export default async function PetDetailPage({
         )}
 
         {access.canEdit && (
-          <form action={logWeight} className="mt-5 flex flex-wrap items-end gap-3">
+          <ActionForm action={logWeight} className="mt-5 flex flex-wrap items-end gap-3">
             <input type="hidden" name="petId" value={pet.id} />
             <div className="w-32">
               <label className="mb-1 block text-xs text-gray-600" htmlFor="weightKg">
@@ -174,8 +176,8 @@ export default async function PetDetailPage({
                 className={field}
               />
             </div>
-            <button type="submit" className={button}>Log weight</button>
-          </form>
+            <SubmitButton pendingLabel="Saving...">Log weight</SubmitButton>
+          </ActionForm>
         )}
       </section>
 
@@ -207,7 +209,7 @@ export default async function PetDetailPage({
         </ul>
 
         {access.canEdit && (
-          <form action={logVaccination} className="mt-5 flex flex-wrap items-end gap-3">
+          <ActionForm action={logVaccination} className="mt-5 flex flex-wrap items-end gap-3">
             <input type="hidden" name="petId" value={pet.id} />
             <div className="w-48">
               <label className="mb-1 block text-xs text-gray-600" htmlFor="vaccineTypeId">
@@ -239,8 +241,8 @@ export default async function PetDetailPage({
               </label>
               <input id="administeredBy" name="administeredBy" className={field} />
             </div>
-            <button type="submit" className={button}>Add record</button>
-          </form>
+            <SubmitButton pendingLabel="Saving...">Add record</SubmitButton>
+          </ActionForm>
         )}
       </section>
       <div className="mt-6">

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { registerPetDocument } from "@/app/pets/[id]/document-actions";
+import SubmitButton from "@/components/submit-button";
 import { uploadDirect } from "@/lib/client-upload";
 import { ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES } from "@/lib/upload-rules";
 
@@ -69,7 +70,7 @@ export default function DocumentUploadForm({ petId }: { petId: string }) {
         kind: String(data.get("kind") ?? "OTHER"),
       });
 
-      if (!result.ok) {
+      if (result.error) {
         setState({ phase: "error", message: result.error });
         return;
       }
@@ -129,17 +130,16 @@ export default function DocumentUploadForm({ petId }: { petId: string }) {
             disabled={busy}
           />
         </div>
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
+        <SubmitButton
+          pending={busy}
+          pendingLabel={
+            state.phase === "uploading"
+              ? `Uploading ${Math.round(state.percentage)}%`
+              : "Saving..."
+          }
         >
-          {state.phase === "uploading"
-            ? `Uploading ${Math.round(state.percentage)}%`
-            : state.phase === "saving"
-              ? "Saving..."
-              : "Upload"}
-        </button>
+          Upload
+        </SubmitButton>
       </div>
 
       {state.phase === "error" && (

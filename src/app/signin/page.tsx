@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/../auth";
+import SubmitButton from "@/components/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -48,12 +49,12 @@ export default async function SignInPage({
           });
         }}
       >
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Redirecting to Google..."
           className="w-full rounded-md bg-pine-900 px-4 py-3 text-sm font-medium text-white hover:bg-pine-700"
         >
           Continue with Google
-        </button>
+        </SubmitButton>
       </form>
 
       <p className="mt-6 text-sm text-bark-soft">

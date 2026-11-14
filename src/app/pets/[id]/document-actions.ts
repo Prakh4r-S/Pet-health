@@ -11,7 +11,7 @@ import {
   MAX_UPLOAD_BYTES,
 } from "@/lib/blob";
 import { baseContentType, documentPrefix } from "@/lib/upload-rules";
-import { fail, type ActionResult } from "@/lib/action-result";
+import { fail, isUniqueViolation, ok, type ActionState } from "@/lib/action-result";
 
 const KINDS = [
   "LAB_REPORT",
@@ -39,7 +39,7 @@ export async function registerPetDocument(input: {
   title: string;
   kind: string;
   note?: string | null;
-}): Promise<ActionResult> {
+}): Promise<ActionState> {
   const user = await getCurrentUser();
 
   const petId = String(input.petId ?? "");
@@ -85,17 +85,20 @@ export async function registerPetDocument(input: {
     });
   } catch (error) {
     // pathname is unique: the same upload cannot be registered twice.
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
+    if (isUniqueViolation(error)) {
       return fail("That file has already been added.");
     }
     throw error;
   }
 
   revalidatePath(`/pets/${petId}`);
-  return { ok: true };
+  return ok;
 }
 
-export async function deletePetDocument(formData: FormData) {
+export async function deletePetDocument(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
 
@@ -103,22 +106,31 @@ export async function deletePetDocument(formData: FormData) {
     where: { id },
     select: { id: true, petId: true, pathname: true, uploadedById: true },
   });
-  if (!document) throw new Error("Document not found.");
+  // Already gone — most likely removed in another tab. Nothing to do,
+  // and nothing worth alarming anyone about.
+  if (!document) return fail("That document has already been removed.");
 
+  // Same answer for "no such document" and "not yours", as in the
+  // download route: a stranger learns nothing about which ids exist.
   const access = await getPetAccess(document.petId, user.id);
-  if (!access) throw new Error("Not found.");
+  if (!access) return fail("That document has already been removed.");
 
   // Owners may remove anything in their pet's file; a vet may remove only
   // what they uploaded themselves. Deleting someone else's clinical
   // record is not a thing a treating vet should be able to do.
   const canDelete = access.role === "OWNER" || document.uploadedById === user.id;
-  if (!canDelete) throw new Error("You can only remove documents you uploaded.");
+  if (!canDelete) return fail("You can only remove documents you uploaded.");
 
   // Database row first. If the blob delete fails we are left with an
   // orphaned file, which is untidy but harmless; the reverse order would
   // leave a row pointing at nothing, which breaks the UI.
   await prisma.document.delete({ where: { id } });
-  await deleteDocument(document.pathname);
+  try {
+    await deleteDocument(document.pathname);
+  } catch {
+    // orphaned blob; the record is gone, which is what was asked for
+  }
 
   revalidatePath(`/pets/${document.petId}`);
+  return ok;
 }

@@ -11,7 +11,7 @@ import {
   MAX_RECORDING_BYTES,
 } from "@/lib/blob";
 import { baseContentType, recordingPrefix } from "@/lib/upload-rules";
-import { fail, type ActionResult } from "@/lib/action-result";
+import { fail, ok, type ActionState } from "@/lib/action-result";
 
 async function requireOwnAppointment(appointmentId: string) {
   const user = await getCurrentUser();
@@ -35,7 +35,7 @@ export async function registerRecording(input: {
   appointmentId: string;
   pathname: string;
   durationSeconds: number | null;
-}): Promise<ActionResult> {
+}): Promise<ActionState> {
   const appointmentId = String(input.appointmentId ?? "");
   const pathname = String(input.pathname ?? "");
 
@@ -102,7 +102,7 @@ export async function registerRecording(input: {
   }
 
   revalidatePath(`/appointments/${appointmentId}/review`);
-  return { ok: true };
+  return ok;
 }
 
 /**
@@ -113,18 +113,22 @@ export async function registerRecording(input: {
  * through a serverless function twice is wasteful. The URL expires in
  * minutes, so it is not a durable handle to the recording.
  */
-export async function requestTranscription(formData: FormData) {
+export async function requestTranscription(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const appointmentId = String(formData.get("appointmentId") ?? "");
   await requireOwnAppointment(appointmentId);
 
-  const recording = await prisma.consultationRecording.findUniqueOrThrow({
+  const recording = await prisma.consultationRecording.findUnique({
     where: { appointmentId },
   });
+  if (!recording) return fail("There is no recording for this consultation.");
 
   const serviceUrl = process.env.TRANSCRIPTION_SERVICE_URL;
   const serviceKey = process.env.TRANSCRIPTION_SERVICE_KEY;
   if (!serviceUrl || !serviceKey) {
-    throw new Error("Transcription service is not configured.");
+    return fail("Transcription isn't set up on this deployment.");
   }
 
   await prisma.consultationRecording.update({
@@ -177,6 +181,9 @@ export async function requestTranscription(formData: FormData) {
   }
 
   revalidatePath(`/appointments/${appointmentId}/review`);
+
+  // A failed transcription is reported by the page itself, from the
+  // stored status, so it is still there after a reload. Returning it as
+  // well would show the same failure twice.
+  return ok;
 }
-
-

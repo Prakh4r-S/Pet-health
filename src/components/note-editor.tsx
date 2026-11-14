@@ -5,10 +5,11 @@ import {
   addPrescription,
   removePrescription,
 } from "@/app/appointments/[id]/note-actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton, { primaryButton } from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 const label = "mb-1 block text-xs font-medium text-gray-600";
-const button = "rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700";
 
 export type NoteData = {
   status: "DRAFT" | "FINALISED";
@@ -60,13 +61,16 @@ function Prescriptions({
                 )}
               </div>
               {!locked && (
-                <form action={removePrescription}>
+                <ActionForm action={removePrescription} confirm="Remove this prescription?">
                   <input type="hidden" name="appointmentId" value={appointmentId} />
                   <input type="hidden" name="id" value={p.id} />
-                  <button type="submit" className="text-xs text-red-600 hover:underline">
+                  <SubmitButton
+                    pendingLabel="Removing..."
+                    className="text-xs text-red-600 hover:underline"
+                  >
                     Remove
-                  </button>
-                </form>
+                  </SubmitButton>
+                </ActionForm>
               )}
             </li>
           ))}
@@ -74,7 +78,7 @@ function Prescriptions({
       )}
 
       {!locked && (
-        <form action={addPrescription} className="mt-5 flex flex-wrap items-end gap-3">
+        <ActionForm action={addPrescription} className="mt-5 flex flex-wrap items-end gap-3">
           <input type="hidden" name="appointmentId" value={appointmentId} />
           <div className="w-40">
             <label className={label} htmlFor="drug">Drug</label>
@@ -108,8 +112,8 @@ function Prescriptions({
             <label className={label} htmlFor="instructions">Instructions</label>
             <input id="instructions" name="instructions" className={field} />
           </div>
-          <button type="submit" className={button}>Add</button>
-        </form>
+          <SubmitButton pendingLabel="Adding...">Add</SubmitButton>
+        </ActionForm>
       )}
     </section>
   );
@@ -154,7 +158,12 @@ export default function NoteEditor({
             {note.followUpOn && <Field label="Follow up" value={note.followUpOn} />}
           </dl>
         ) : (
-          <form action={saveNoteDraft} className="grid gap-4">
+          <ActionForm
+            action={saveNoteDraft}
+            successMessage="Draft saved."
+            resetOnSuccess={false}
+            className="grid gap-4"
+          >
             <input type="hidden" name="appointmentId" value={appointmentId} />
             <div>
               <label className={label} htmlFor="presentingComplaint">
@@ -208,27 +217,29 @@ export default function NoteEditor({
                 defaultValue={note.followUpOn ?? ""}
               />
             </div>
-            <button type="submit" className={`${button} w-fit`}>Save draft</button>
-          </form>
+            <SubmitButton pendingLabel="Saving..." className={`${primaryButton} w-fit`}>
+              Save draft
+            </SubmitButton>
+          </ActionForm>
         )}
       </section>
 
       <Prescriptions appointmentId={appointmentId} note={note} />
 
       {!locked && (
-        <form action={finaliseNote} className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <ActionForm action={finaliseNote} confirm="Finalise this record? It will be locked, and later corrections can only be added as amendments." className="rounded-lg border border-amber-200 bg-amber-50 p-5">
           <input type="hidden" name="appointmentId" value={appointmentId} />
           <p className="mb-3 text-sm text-amber-900">
             Finalising marks the consultation complete and locks this record.
             Corrections after that are added as amendments, not edits.
           </p>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Finalising..."
             className="rounded-md bg-amber-700 px-4 py-2 text-sm text-white hover:bg-amber-800"
           >
             Finalise record
-          </button>
-        </form>
+          </SubmitButton>
+        </ActionForm>
       )}
 
       {(locked || note.amendments.length > 0) && (
@@ -251,7 +262,7 @@ export default function NoteEditor({
           )}
 
           {locked && (
-            <form action={addAmendment} className="mt-4 grid gap-2">
+            <ActionForm action={addAmendment} className="mt-4 grid gap-2">
               <input type="hidden" name="appointmentId" value={appointmentId} />
               <textarea
                 name="body"
@@ -260,8 +271,10 @@ export default function NoteEditor({
                 placeholder="Correction or addition to the record above"
                 required
               />
-              <button type="submit" className={`${button} w-fit`}>Add amendment</button>
-            </form>
+              <SubmitButton pendingLabel="Adding..." className={`${primaryButton} w-fit`}>
+                Add amendment
+              </SubmitButton>
+            </ActionForm>
           )}
         </section>
       )}

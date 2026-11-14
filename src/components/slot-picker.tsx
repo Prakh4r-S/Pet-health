@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { bookAppointment } from "@/app/appointments/actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
+
 
 type Pet = { id: string; name: string };
 // Slots arrive as ISO strings: a Date cannot cross the server/client
@@ -10,8 +13,20 @@ type Props = { vetProfileId: string; pets: Pet[]; slots: string[] };
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 
+const subscribe = () => () => {};
+
 export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+
+  // False on the server and during hydration, true once in the browser.
+  // The times below are grouped and labelled in the viewer's timezone,
+  // which the server does not know: rendering them there would group
+  // slots under UTC days and then disagree with the browser on hydration.
+  const inBrowser = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
 
   if (pets.length === 0) {
     return (
@@ -43,8 +58,16 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
     );
   }
 
+  if (!inBrowser) {
+    return (
+      <p className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+        Loading available times...
+      </p>
+    );
+  }
+
   return (
-    <form action={bookAppointment} className="grid gap-5">
+    <ActionForm action={bookAppointment} className="grid gap-5" resetOnSuccess={false}>
       <input type="hidden" name="vetProfileId" value={vetProfileId} />
       <input type="hidden" name="startsAt" value={selected ?? ""} />
 
@@ -91,11 +114,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
         <textarea id="reason" name="reason" rows={3} className={field} />
       </div>
 
-      <button
-        type="submit"
-        disabled={!selected}
-        className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:bg-gray-300"
-      >
+      <SubmitButton disabled={!selected} pendingLabel="Booking...">
         {selected
           ? `Book ${new Date(selected).toLocaleString(undefined, {
               weekday: "short",
@@ -103,7 +122,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
               minute: "2-digit",
             })}`
           : "Pick a time"}
-      </button>
-    </form>
+      </SubmitButton>
+    </ActionForm>
   );
 }

@@ -5,11 +5,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getAvailableSlots, findVetsAvailableNow } from "@/lib/slots";
+import { fail, isUniqueViolation, ok, type ActionState } from "@/lib/action-result";
 
-/** Postgres unique-violation code, surfaced by Prisma as P2002. */
-const UNIQUE_VIOLATION = "P2002";
-
-export async function bookAppointment(formData: FormData) {
+export async function bookAppointment(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const user = await getCurrentUser();
 
   const petId = String(formData.get("petId") ?? "");
@@ -17,10 +18,11 @@ export async function bookAppointment(formData: FormData) {
   const startsAtRaw = String(formData.get("startsAt") ?? "");
   const reason = String(formData.get("reason") ?? "").trim() || null;
 
-  if (!petId || !vetProfileId || !startsAtRaw) throw new Error("Missing details.");
+  if (!petId) return fail("Choose a pet.");
+  if (!vetProfileId || !startsAtRaw) return fail("Pick a time first.");
 
   const startsAt = new Date(startsAtRaw);
-  if (Number.isNaN(startsAt.valueOf())) throw new Error("Invalid time.");
+  if (Number.isNaN(startsAt.valueOf())) return fail("Pick a time first.");
 
   // The pet must belong to the person booking. The id comes from a form
   // field, so this is not a formality.
@@ -28,19 +30,20 @@ export async function bookAppointment(formData: FormData) {
     where: { id: petId, ownerId: user.id, archivedAt: null },
     select: { id: true },
   });
-  if (!pet) throw new Error("Pet not found.");
+  if (!pet) return fail("Choose one of your pets.");
 
-  const profile = await prisma.vetProfile.findUniqueOrThrow({
+  const profile = await prisma.vetProfile.findUnique({
     where: { id: vetProfileId },
     select: { slotMinutes: true },
   });
+  if (!profile) return fail("That vet is no longer available.");
 
   // Re-derive the slot list server-side rather than trusting the posted
   // time. Without this, anyone could book 03:00 on a Sunday by editing
   // the form value — the rendered options are a convenience, not a rule.
   const slots = await getAvailableSlots(vetProfileId);
   const isReal = slots.some((s) => s.startsAt.getTime() === startsAt.getTime());
-  if (!isReal) throw new Error("That time is no longer available.");
+  if (!isReal) return fail("That time is no longer available. Please pick another.");
 
   const endsAt = new Date(startsAt.getTime() + profile.slotMinutes * 60_000);
 
@@ -55,13 +58,8 @@ export async function bookAppointment(formData: FormData) {
     // is where that rejection becomes a sensible message. Checking first
     // and hoping is not a solution to a race; letting the database
     // arbitrate is.
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === UNIQUE_VIOLATION
-    ) {
-      throw new Error("Someone just booked that slot. Please pick another time.");
+    if (isUniqueViolation(error)) {
+      return fail("Someone just booked that slot. Please pick another time.");
     }
     throw error;
   }
@@ -70,7 +68,10 @@ export async function bookAppointment(formData: FormData) {
   redirect("/appointments");
 }
 
-export async function bookInstantMatch(formData: FormData) {
+export async function bookInstantMatch(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const user = await getCurrentUser();
 
   const petId = String(formData.get("petId") ?? "");
@@ -81,16 +82,17 @@ export async function bookInstantMatch(formData: FormData) {
     where: { id: petId, ownerId: user.id, archivedAt: null },
     select: { id: true },
   });
-  if (!pet) throw new Error("Pet not found.");
+  if (!pet) return fail("Choose one of your pets.");
 
   const candidates = await findVetsAvailableNow(specialisationSlug);
   if (candidates.length === 0) {
-    throw new Error("No vets are available right now. Try booking a specific time.");
+    return fail("No vets are available right now. Try booking a specific time.");
   }
 
   // Walk the candidates in order rather than committing to the first.
   // If someone takes the soonest slot between our read and our write,
   // the next vet is tried instead of failing the whole request.
+  let booked = false;
   for (const { vet, nextSlot } of candidates) {
     try {
       await prisma.appointment.create({
@@ -104,27 +106,26 @@ export async function bookInstantMatch(formData: FormData) {
           wasInstantMatch: true,
         },
       });
-      revalidatePath("/appointments");
-      redirect("/appointments");
+      booked = true;
+      break;
     } catch (error) {
-      // redirect() throws by design — let it through.
-      if (typeof error === "object" && error !== null && "digest" in error) throw error;
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error &&
-        error.code === UNIQUE_VIOLATION
-      ) {
-        continue;
-      }
+      if (isUniqueViolation(error)) continue;
       throw error;
     }
   }
 
-  throw new Error("Those slots were taken while booking. Please try again.");
+  if (!booked) return fail("Those slots were taken while booking. Please try again.");
+
+  // Outside the try: redirect() works by throwing, and should not have to
+  // be picked back out of a catch block.
+  revalidatePath("/appointments");
+  redirect("/appointments");
 }
 
-export async function cancelAppointment(formData: FormData) {
+export async function cancelAppointment(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
 
@@ -132,12 +133,13 @@ export async function cancelAppointment(formData: FormData) {
     where: { id },
     include: { vetProfile: { select: { userId: true } } },
   });
-  if (!appointment) throw new Error("Appointment not found.");
+  if (!appointment) return fail("Appointment not found.");
 
   // Either party may cancel, nobody else.
   const isOwner = appointment.ownerId === user.id;
   const isVet = appointment.vetProfile.userId === user.id;
-  if (!isOwner && !isVet) throw new Error("Not your appointment.");
+  if (!isOwner && !isVet) return fail("Appointment not found.");
+  if (appointment.status === "CANCELLED") return ok;
 
   await prisma.appointment.update({
     where: { id },
@@ -146,4 +148,5 @@ export async function cancelAppointment(formData: FormData) {
 
   revalidatePath("/appointments");
   revalidatePath("/vet/appointments");
+  return ok;
 }

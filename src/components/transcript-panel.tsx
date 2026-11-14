@@ -3,6 +3,8 @@ import {
   acceptProposedField,
   acceptProposedMedication,
 } from "@/app/appointments/[id]/proposal-actions";
+import ActionForm from "@/components/action-form";
+import SubmitButton from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
 const smallButton =
@@ -54,7 +56,7 @@ function ProposedField({
   if (!value) return null;
 
   return (
-    <form action={acceptProposedField} className="rounded-md border border-gray-200 p-3">
+    <ActionForm action={acceptProposedField} className="rounded-md border border-gray-200 p-3">
       <input type="hidden" name="appointmentId" value={appointmentId} />
       <input type="hidden" name="field" value={name} />
       <label className="mb-1 block text-xs font-medium text-gray-500">
@@ -63,10 +65,10 @@ function ProposedField({
       {/* Editable before accepting — the vet should be able to correct a
           proposal rather than accept it and then fix it. */}
       <textarea name="value" rows={3} className={field} defaultValue={value} />
-      <button type="submit" className={`${smallButton} mt-2`}>
+      <SubmitButton pendingLabel="Adding..." className={`${smallButton} mt-2`}>
         Add to note
-      </button>
-    </form>
+      </SubmitButton>
+    </ActionForm>
   );
 }
 
@@ -104,17 +106,17 @@ export default function TranscriptPanel({
       </div>
 
       {recording.status === "UPLOADED" && (
-        <form action={requestTranscription}>
+        <ActionForm action={requestTranscription}>
           <input type="hidden" name="appointmentId" value={appointmentId} />
           <p className="mb-3 text-sm text-gray-600">
             Transcribe the recording to get a suggested note. Everything it
             produces is a proposal — nothing is added to the record until you
             accept it.
           </p>
-          <button type="submit" className={smallButton}>
+          <SubmitButton pendingLabel="Transcribing..." className={smallButton}>
             Transcribe
-          </button>
-        </form>
+          </SubmitButton>
+        </ActionForm>
       )}
 
       {recording.status === "TRANSCRIBING" && (
@@ -129,10 +131,12 @@ export default function TranscriptPanel({
           <p className="mb-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
             Transcription failed: {recording.error ?? "unknown error"}
           </p>
-          <form action={requestTranscription}>
+          <ActionForm action={requestTranscription}>
             <input type="hidden" name="appointmentId" value={appointmentId} />
-            <button type="submit" className={smallButton}>Try again</button>
-          </form>
+            <SubmitButton pendingLabel="Transcribing..." className={smallButton}>
+              Try again
+            </SubmitButton>
+          </ActionForm>
         </div>
       )}
 
@@ -187,7 +191,7 @@ export default function TranscriptPanel({
               </h3>
               <div className="grid gap-3">
                 {proposal.medications.map((m, i) => (
-                  <form
+                  <ActionForm
                     key={i}
                     action={acceptProposedMedication}
                     className="rounded-md border border-gray-200 p-3"
@@ -228,7 +232,9 @@ export default function TranscriptPanel({
                           defaultValue={m.duration_days ?? ""}
                         />
                       </div>
-                      <button type="submit" className={smallButton}>Prescribe</button>
+                      <SubmitButton pendingLabel="Adding..." className={smallButton}>
+                        Prescribe
+                      </SubmitButton>
                     </div>
                     {m.evidence && (
                       /* The sentence the drug was named in. Checking a
@@ -238,7 +244,7 @@ export default function TranscriptPanel({
                         Heard: “{m.evidence}”
                       </p>
                     )}
-                  </form>
+                  </ActionForm>
                 ))}
               </div>
             </div>
