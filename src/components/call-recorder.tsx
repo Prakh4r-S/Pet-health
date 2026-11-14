@@ -229,7 +229,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
           <button
             type="button"
             onClick={start}
-            className="rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
+            className="rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700"
           >
             {state === "error" ? "Try recording again" : "Record for notes"}
           </button>
@@ -242,24 +242,24 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
             <button
               type="button"
               onClick={() => void stop()}
-              className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-pine-100"
+              className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-aqua-100"
             >
               Stop and save
             </button>
           </>
         ) : (
-          <span className="text-sm text-bark-soft">
+          <span className="text-sm text-ink-soft">
             {state === "uploading" ? `Uploading ${Math.round(progress)}%` : "Saved"}
           </span>
         )}
 
         {state === "idle" && (
-          <span className="text-xs text-bark-soft">
+          <span className="text-xs text-ink-soft">
             Tell the owner before you start.
           </span>
         )}
         {state === "recording" && (
-          <span className="text-xs text-bark-soft">
+          <span className="text-xs text-ink-soft">
             Saved when you stop or leave the call. Keep this tab open until then.
           </span>
         )}
@@ -268,7 +268,7 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
       {message && (
         <p
           role={state === "error" ? "alert" : "status"}
-          className={`mt-2 text-xs ${state === "error" ? "text-red-700" : "text-bark-soft"}`}
+          className={`mt-2 text-xs ${state === "error" ? "text-red-700" : "text-ink-soft"}`}
         >
           {message}
         </p>

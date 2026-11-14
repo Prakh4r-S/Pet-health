@@ -9,7 +9,7 @@ import ActionForm from "@/components/action-form";
 import SubmitButton, { primaryButton } from "@/components/submit-button";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
-const label = "mb-1 block text-xs font-medium text-bark-soft";
+const label = "mb-1 block text-xs font-medium text-ink-soft";
 
 export type NoteData = {
   status: "DRAFT" | "FINALISED";
@@ -45,19 +45,19 @@ function Prescriptions({
       <h2 className="mb-4 font-medium">Prescriptions</h2>
 
       {note.prescriptions.length === 0 ? (
-        <p className="text-sm text-bark-faint">None.</p>
+        <p className="text-sm text-ink-faint">None.</p>
       ) : (
         <ul className="divide-y divide-mist">
           {note.prescriptions.map((p) => (
             <li key={p.id} className="flex items-start justify-between gap-4 py-3">
               <div>
                 <p className="text-sm font-medium">{p.drug}</p>
-                <p className="text-xs text-bark-soft">
+                <p className="text-xs text-ink-soft">
                   {p.dose} · {p.frequency}
                   {p.durationDays && ` · ${p.durationDays} days`}
                 </p>
                 {p.instructions && (
-                  <p className="mt-1 text-xs text-bark-soft">{p.instructions}</p>
+                  <p className="mt-1 text-xs text-ink-soft">{p.instructions}</p>
                 )}
               </div>
               {!locked && (
@@ -131,11 +131,11 @@ export default function NoteEditor({
   return (
     <div className="grid gap-6">
       {note.scratch && (
-        <section className="rounded-lg border border-mist bg-pine-50 p-5">
-          <h2 className="mb-2 text-sm font-medium text-bark-soft">
+        <section className="rounded-lg border border-mist bg-aqua-50 p-5">
+          <h2 className="mb-2 text-sm font-medium text-ink-soft">
             Notes taken during the call
           </h2>
-          <p className="whitespace-pre-wrap text-sm text-bark">{note.scratch}</p>
+          <p className="whitespace-pre-wrap text-sm text-ink">{note.scratch}</p>
         </section>
       )}
 
@@ -143,7 +143,7 @@ export default function NoteEditor({
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-medium">Consultation record</h2>
           {locked && (
-            <span className="rounded-full bg-pine-100 px-2.5 py-1 text-xs text-pine-900">
+            <span className="rounded-full bg-aqua-100 px-2.5 py-1 text-xs text-navy-900">
               Finalised {note.finalisedAt?.slice(0, 10)}
             </span>
           )}
@@ -247,13 +247,13 @@ export default function NoteEditor({
           <h2 className="mb-4 font-medium">Amendments</h2>
 
           {note.amendments.length === 0 ? (
-            <p className="text-sm text-bark-faint">None.</p>
+            <p className="text-sm text-ink-faint">None.</p>
           ) : (
             <ul className="grid gap-3">
               {note.amendments.map((a) => (
                 <li key={a.id} className="rounded-md border border-mist p-3">
                   <p className="whitespace-pre-wrap text-sm">{a.body}</p>
-                  <p className="mt-1 text-xs text-bark-soft">
+                  <p className="mt-1 text-xs text-ink-soft">
                     {a.authorName ?? "Vet"} · {a.createdAt}
                   </p>
                 </li>
@@ -285,7 +285,7 @@ export default function NoteEditor({
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-bark-soft">{label}</dt>
+      <dt className="text-xs font-medium text-ink-soft">{label}</dt>
       <dd className="mt-0.5 whitespace-pre-wrap text-sm">{value || "—"}</dd>
     </div>
   );

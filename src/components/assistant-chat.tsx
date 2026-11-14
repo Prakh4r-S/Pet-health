@@ -62,7 +62,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
 
   return (
     <div className="grid gap-4">
-      <div className="rounded-md border border-mist bg-pine-50 p-3 text-sm text-bark">
+      <div className="rounded-md border border-mist bg-aqua-50 p-3 text-sm text-ink">
         This assistant reads your pets&apos; records and answers questions about
         them. It can&apos;t diagnose, interpret symptoms, or advise on treatment
         — that needs a vet.
@@ -70,7 +70,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
 
       {messages.length === 0 && (
         <div className="grid gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-bark-soft">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">
             Try asking
           </p>
           {SUGGESTIONS.map((s) => (
@@ -79,13 +79,13 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               type="button"
               disabled={!hasPets}
               onClick={() => void send(s)}
-              className="rounded-md border border-mist px-3 py-2 text-left text-sm hover:bg-pine-50 disabled:opacity-50"
+              className="rounded-md border border-mist px-3 py-2 text-left text-sm hover:bg-aqua-50 disabled:opacity-50"
             >
               {s}
             </button>
           ))}
           {!hasPets && (
-            <p className="text-sm text-bark-soft">
+            <p className="text-sm text-ink-soft">
               Add a pet first — there&apos;s nothing to answer questions about yet.
             </p>
           )}
@@ -99,7 +99,7 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               <div
                 className={
                   m.role === "user"
-                    ? "ml-auto w-fit max-w-[80%] whitespace-pre-wrap rounded-lg bg-pine-900 px-3 py-2 text-sm text-white"
+                    ? "ml-auto w-fit max-w-[80%] whitespace-pre-wrap rounded-lg bg-navy-900 px-3 py-2 text-sm text-white"
                     : "w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-mist px-3 py-2 text-sm"
                 }
               >
@@ -110,14 +110,14 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
                    question needs a vet, offer the vet. */
                 <Link
                   href="/vets"
-                  className="mt-2 inline-block rounded-md bg-pine-900 px-3 py-1.5 text-sm text-white hover:bg-pine-700"
+                  className="mt-2 inline-block rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700"
                 >
                   Book a consultation
                 </Link>
               )}
             </div>
           ))}
-          {busy && <p className="text-sm text-bark-faint">Reading the records...</p>}
+          {busy && <p className="text-sm text-ink-faint">Reading the records...</p>}
           <div ref={endRef} />
         </div>
       )}
@@ -138,13 +138,13 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
           disabled={!hasPets || busy}
           maxLength={MAX_QUESTION_CHARS}
           placeholder="Ask about your pets' records"
-          className="flex-1 rounded-md border border-mist-deep px-3 py-2 text-sm disabled:bg-pine-50"
+          className="flex-1 rounded-md border border-mist-deep px-3 py-2 text-sm disabled:bg-aqua-50"
         />
         <button
           type="button"
           onClick={() => void send(input)}
           disabled={!hasPets || busy || !input.trim()}
-          className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700 disabled:opacity-60"
+          className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700 disabled:opacity-60"
         >
           Ask
         </button>

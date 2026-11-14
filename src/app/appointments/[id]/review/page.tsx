@@ -68,13 +68,13 @@ export default async function ConsultationReviewPage({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
-      <Link href="/vet/appointments" className="text-sm text-bark-soft hover:underline">
+      <Link href="/vet/appointments" className="text-sm text-ink-soft hover:underline">
         Back to schedule
       </Link>
 
       <header className="mb-6 mt-3">
-        <h1 className="text-2xl text-pine-900">{appointment.pet.name}</h1>
-        <p className="text-sm text-bark-soft">
+        <h1 className="text-2xl text-navy-900">{appointment.pet.name}</h1>
+        <p className="text-sm text-ink-soft">
           Consultation on{" "}
           <LocalTime date={appointment.startsAt.toISOString()} format="dayTime" />
           {appointment.owner.name && ` · owner: ${appointment.owner.name}`}
@@ -87,7 +87,7 @@ export default async function ConsultationReviewPage({
           <section className="rounded-lg border border-mist p-5">
             <h2 className="mb-4 font-medium">From this consultation</h2>
             {appointment.documents.length === 0 ? (
-              <p className="text-sm text-bark-faint">
+              <p className="text-sm text-ink-faint">
                 No snapshots or documents were captured during this call.
               </p>
             ) : (
@@ -102,12 +102,12 @@ export default async function ConsultationReviewPage({
                     >
                       {d.title}
                     </a>
-                    <p className="text-xs text-bark-soft">
+                    <p className="text-xs text-ink-soft">
                       {kindLabels[d.kind] ?? d.kind}
                       {" · "}
                       <LocalTime date={d.createdAt.toISOString()} format="time" />
                     </p>
-                    {d.note && <p className="mt-1 text-xs text-bark-soft">{d.note}</p>}
+                    {d.note && <p className="mt-1 text-xs text-ink-soft">{d.note}</p>}
                   </li>
                 ))}
               </ul>

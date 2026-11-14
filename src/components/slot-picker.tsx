@@ -30,7 +30,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (pets.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
         Add a pet before booking.
       </p>
     );
@@ -52,7 +52,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (slots.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
         No times available in the next two weeks.
       </p>
     );
@@ -60,7 +60,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
   if (!inBrowser) {
     return (
-      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-bark-soft">
+      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
         Loading available times...
       </p>
     );
@@ -74,7 +74,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
       <div className="max-h-80 overflow-y-auto pr-1">
         {[...byDay.entries()].map(([day, times]) => (
           <div key={day} className="mb-4">
-            <p className="mb-2 text-xs font-medium text-bark-soft">{day}</p>
+            <p className="mb-2 text-xs font-medium text-ink-soft">{day}</p>
             <div className="flex flex-wrap gap-2">
               {times.map((iso) => (
                 <button
@@ -83,8 +83,8 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
                   onClick={() => setSelected(iso)}
                   className={`rounded-md px-3 py-1.5 text-sm ${
                     selected === iso
-                      ? "bg-pine-900 text-white"
-                      : "bg-mist hover:bg-pine-100"
+                      ? "bg-navy-900 text-white"
+                      : "bg-mist hover:bg-aqua-100"
                   }`}
                 >
                   {new Date(iso).toLocaleTimeString(undefined, {

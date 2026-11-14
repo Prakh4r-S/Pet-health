@@ -69,7 +69,7 @@ export default function PetForm({ species }: { species: Species[] }) {
       <div>
         <label className={label} htmlFor="birthDate">Date of birth</label>
         <input id="birthDate" name="birthDate" type="date" className={field} />
-        <label className="mt-2 flex items-center gap-2 text-sm text-bark-soft">
+        <label className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
           <input type="checkbox" name="birthDateIsApprox" />
           This date is an estimate
         </label>

@@ -37,17 +37,17 @@ export default async function PetsPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl text-pine-900">Your pets</h1>
+        <h1 className="text-2xl text-navy-900">Your pets</h1>
           <Link
             href="/pets/new"
-            className="rounded-md bg-pine-900 px-4 py-2 text-sm text-white hover:bg-pine-700"
+            className="rounded-md bg-navy-900 px-4 py-2 text-sm text-white hover:bg-navy-700"
           >
             Add pet
           </Link>
         </div>
 
       {pets.length === 0 ? (
-        <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-bark-soft">
+        <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-ink-soft">
           No pets yet. Add one to start keeping records.
         </p>
       ) : (
@@ -57,7 +57,7 @@ export default async function PetsPage() {
               <Link href={`/pets/${pet.id}`} className="font-medium hover:underline">
                 {pet.name}
               </Link>
-              <p className="text-sm text-bark-soft">
+              <p className="text-sm text-ink-soft">
                 {pet.species.name}
                 {" · "}
                 {pet.breed?.name ?? pet.breedFreeText ?? "Unknown breed"}

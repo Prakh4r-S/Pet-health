@@ -86,7 +86,7 @@ export default function DocumentUploadForm({ petId }: { petId: string }) {
     <form ref={formRef} onSubmit={onSubmit} className="mt-5 grid gap-3">
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-52">
-          <label className="mb-1 block text-xs text-bark-soft" htmlFor="file">
+          <label className="mb-1 block text-xs text-ink-soft" htmlFor="file">
             File (PDF or image, max 10 MB)
           </label>
           <input
@@ -100,7 +100,7 @@ export default function DocumentUploadForm({ petId }: { petId: string }) {
           />
         </div>
         <div className="w-44">
-          <label className="mb-1 block text-xs text-bark-soft" htmlFor="kind">
+          <label className="mb-1 block text-xs text-ink-soft" htmlFor="kind">
             Type
           </label>
           <select
@@ -118,7 +118,7 @@ export default function DocumentUploadForm({ petId }: { petId: string }) {
           </select>
         </div>
         <div className="min-w-44 flex-1">
-          <label className="mb-1 block text-xs text-bark-soft" htmlFor="title">
+          <label className="mb-1 block text-xs text-ink-soft" htmlFor="title">
             Title (optional)
           </label>
           <input

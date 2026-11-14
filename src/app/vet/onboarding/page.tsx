@@ -25,8 +25,8 @@ export default async function VetOnboardingPage() {
 
   return (
     <main className="mx-auto max-w-xl px-6 py-10">
-      <h1 className="text-2xl text-pine-900">Register as a vet</h1>
-      <p className="mb-8 mt-2 text-sm text-bark-soft">
+      <h1 className="text-2xl text-navy-900">Register as a vet</h1>
+      <p className="mb-8 mt-2 text-sm text-ink-soft">
         This adds a practitioner profile to your account. You can still keep your
         own pets&apos; records.
       </p>
@@ -81,7 +81,7 @@ export default async function VetOnboardingPage() {
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-bark-soft">
+          <p className="mt-1 text-xs text-ink-soft">
             Your consulting hours and days off are set in this timezone. Owners
             see appointment times converted to their own.
           </p>

@@ -1,4 +1,4 @@
-# Pet Health
+# Max Petcare
 
 A veterinary telehealth and pet records application. Owners keep their
 animals' health records, book video consultations, and ask questions

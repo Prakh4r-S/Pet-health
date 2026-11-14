@@ -9,13 +9,13 @@ import {
 } from "@/app/pets/[id]/actions";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
-const label = "mb-1 block text-xs text-bark-soft";
+const label = "mb-1 block text-xs text-ink-soft";
 const textButton = "text-xs hover:underline";
 
 const severityStyles: Record<string, { text: string; className: string }> = {
   SEVERE: { text: "severe", className: "bg-red-100 text-red-800" },
   MODERATE: { text: "moderate", className: "bg-amber-100 text-amber-800" },
-  MILD: { text: "mild", className: "bg-mist text-bark" },
+  MILD: { text: "mild", className: "bg-mist text-ink" },
 };
 
 export type AllergyRow = {
@@ -57,7 +57,7 @@ export default function PetMedicalHistory({
 
       <h3 className="text-sm font-medium">Allergies</h3>
       {allergies.length === 0 ? (
-        <p className="mt-1 text-sm text-bark-faint">None recorded.</p>
+        <p className="mt-1 text-sm text-ink-faint">None recorded.</p>
       ) : (
         <ul className="mt-1 divide-y divide-mist">
           {allergies.map((a) => {
@@ -71,7 +71,7 @@ export default function PetMedicalHistory({
                       {severity.text}
                     </span>
                   )}
-                  {a.reaction && <p className="text-xs text-bark-soft">{a.reaction}</p>}
+                  {a.reaction && <p className="text-xs text-ink-soft">{a.reaction}</p>}
                 </div>
                 {canEdit && (
                   <ActionForm
@@ -94,7 +94,7 @@ export default function PetMedicalHistory({
 
       {canEdit && (
         <details className="mt-2">
-          <summary className="cursor-pointer select-none text-sm text-pine-700 hover:text-pine-900">
+          <summary className="cursor-pointer select-none text-sm text-navy-700 hover:text-navy-900">
             Add an allergy
           </summary>
           <ActionForm action={addAllergy} className="mt-3 flex flex-wrap items-end gap-3">
@@ -140,18 +140,18 @@ export default function PetMedicalHistory({
 
       <h3 className="mt-6 text-sm font-medium">Conditions</h3>
       {conditions.length === 0 ? (
-        <p className="mt-1 text-sm text-bark-faint">None recorded.</p>
+        <p className="mt-1 text-sm text-ink-faint">None recorded.</p>
       ) : (
         <ul className="mt-1 divide-y divide-mist">
           {conditions.map((c) => (
             <li key={c.id} className="flex items-start justify-between gap-4 py-2.5">
               <div className="text-sm">
                 <span className="font-medium">{c.name}</span>
-                <span className="text-bark-soft">
+                <span className="text-ink-soft">
                   {c.resolvedOn ? ` · resolved ${c.resolvedOn}` : " · ongoing"}
                   {c.diagnosedOn && ` · diagnosed ${c.diagnosedOn}`}
                 </span>
-                {c.notes && <p className="whitespace-pre-wrap text-xs text-bark-soft">{c.notes}</p>}
+                {c.notes && <p className="whitespace-pre-wrap text-xs text-ink-soft">{c.notes}</p>}
               </div>
               {canEdit && (
                 <div className="flex shrink-0 flex-col items-end gap-1">
@@ -161,7 +161,7 @@ export default function PetMedicalHistory({
                       <input type="hidden" name="id" value={c.id} />
                       <SubmitButton
                         pendingLabel="Saving..."
-                        className={`${textButton} text-pine-700`}
+                        className={`${textButton} text-navy-700`}
                       >
                         Mark resolved
                       </SubmitButton>
@@ -187,7 +187,7 @@ export default function PetMedicalHistory({
 
       {canEdit && (
         <details className="mt-2">
-          <summary className="cursor-pointer select-none text-sm text-pine-700 hover:text-pine-900">
+          <summary className="cursor-pointer select-none text-sm text-navy-700 hover:text-navy-900">
             Add a condition
           </summary>
           <ActionForm action={addCondition} className="mt-3 flex flex-wrap items-end gap-3">

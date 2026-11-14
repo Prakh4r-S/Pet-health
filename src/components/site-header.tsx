@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { auth, signOut } from "@/../auth";
 import { prisma } from "@/lib/prisma";
@@ -31,34 +32,42 @@ export default async function SiteHeader() {
       {/* Wraps rather than overflows: a vet's nav has seven items, which
           do not fit beside the logo on a phone. */}
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4">
-        <Link href="/" className="whitespace-nowrap font-display text-lg text-pine-900">
-          Pet Health
+        <Link
+          href="/"
+          className="flex items-center gap-2 whitespace-nowrap font-display text-lg font-semibold text-navy-900"
+        >
+          {/* The drawing from the logo, without its wordmark: at this size
+              the lettering would be unreadable, so the name is set as
+              text beside it. Decorative here — the link is named by that
+              text. */}
+          <Image src="/logo-mark.png" alt="" width={36} height={36} priority />
+          Max Petcare
         </Link>
 
         {session?.user ? (
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             {isVet && (
               <>
-                <Link href="/vet/appointments" className="hover:text-pine-700">
+                <Link href="/vet/appointments" className="hover:text-navy-700">
                   Schedule
                 </Link>
-                <Link href="/vet/availability" className="hover:text-pine-700">
+                <Link href="/vet/availability" className="hover:text-navy-700">
                   Availability
                 </Link>
                 <span className="hidden h-4 w-px bg-mist sm:block" />
               </>
             )}
-            <Link href="/pets" className="hover:text-pine-700">
+            <Link href="/pets" className="hover:text-navy-700">
               Pets
             </Link>
-            <Link href="/appointments" className="hover:text-pine-700">
+            <Link href="/appointments" className="hover:text-navy-700">
               Appointments
             </Link>
-            <Link href="/assistant" className="hover:text-pine-700">
+            <Link href="/assistant" className="hover:text-navy-700">
               Ask
             </Link>
             {!isVet && (
-              <Link href="/vet/onboarding" className="whitespace-nowrap text-bark-soft hover:text-pine-700">
+              <Link href="/vet/onboarding" className="whitespace-nowrap text-ink-soft hover:text-navy-700">
                 Become a vet
               </Link>
             )}
@@ -70,7 +79,7 @@ export default async function SiteHeader() {
             >
               <SubmitButton
                 pendingLabel="Signing out..."
-                className="whitespace-nowrap text-bark-soft hover:text-bark"
+                className="whitespace-nowrap text-ink-soft hover:text-ink"
               >
                 Sign out
               </SubmitButton>
@@ -78,15 +87,15 @@ export default async function SiteHeader() {
           </nav>
         ) : (
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-            <Link href="/#how-it-works" className="hidden hover:text-pine-700 sm:inline">
+            <Link href="/#how-it-works" className="hidden hover:text-navy-700 sm:inline">
               How it works
             </Link>
-            <Link href="/#for-vets" className="hidden hover:text-pine-700 sm:inline">
+            <Link href="/#for-vets" className="hidden hover:text-navy-700 sm:inline">
               For veterinarians
             </Link>
             <Link
               href="/signin"
-              className="rounded-md bg-pine-900 px-4 py-2 text-white hover:bg-pine-700"
+              className="rounded-md bg-navy-900 px-4 py-2 text-white hover:bg-navy-700"
             >
               Sign in
             </Link>

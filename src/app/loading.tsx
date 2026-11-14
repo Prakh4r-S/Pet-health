@@ -18,7 +18,7 @@ export default function Loading() {
 
       <div className="animate-pulse" aria-hidden="true">
         <div className="mb-8 flex items-center justify-between">
-          <div className="h-8 w-48 rounded-md bg-pine-100" />
+          <div className="h-8 w-48 rounded-md bg-aqua-100" />
           <div className="h-9 w-24 rounded-md bg-mist" />
         </div>
 
@@ -26,7 +26,7 @@ export default function Loading() {
           {[0, 1, 2].map((i) => (
             <div key={i} className="rounded-lg border border-mist p-4">
               <div className="h-4 w-40 rounded bg-mist" />
-              <div className="mt-3 h-3 w-64 max-w-full rounded bg-pine-50" />
+              <div className="mt-3 h-3 w-64 max-w-full rounded bg-aqua-50" />
             </div>
           ))}
         </div>
