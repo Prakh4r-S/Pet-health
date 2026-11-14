@@ -19,7 +19,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Pet Health",
+  title: "Max Petcare",
   description:
     "Keep your pets' health records in one place and see a vet without leaving home.",
 };

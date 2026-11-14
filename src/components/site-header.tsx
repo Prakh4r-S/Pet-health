@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { auth, signOut } from "@/../auth";
 import { prisma } from "@/lib/prisma";
@@ -31,8 +32,16 @@ export default async function SiteHeader() {
       {/* Wraps rather than overflows: a vet's nav has seven items, which
           do not fit beside the logo on a phone. */}
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4">
-        <Link href="/" className="whitespace-nowrap font-display text-lg text-pine-900">
-          Pet Health
+        <Link
+          href="/"
+          className="flex items-center gap-2 whitespace-nowrap font-display text-lg text-pine-900"
+        >
+          {/* The drawing from the logo, without its wordmark: at this size
+              the lettering would be unreadable, so the name is set as
+              text beside it. Decorative here — the link is named by that
+              text. */}
+          <Image src="/logo-mark.png" alt="" width={36} height={36} priority />
+          Max Petcare
         </Link>
 
         {session?.user ? (

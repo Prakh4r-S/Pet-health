@@ -21,12 +21,12 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <title>Something went wrong · Pet Health</title>
+        <title>Something went wrong · Max Petcare</title>
         <main className="mx-auto flex max-w-md flex-col px-6 py-24 text-center">
           <p className="text-sm font-medium uppercase tracking-wide text-pine-500">
             Something went wrong
           </p>
-          <h1 className="mt-3 text-3xl text-pine-900">Pet Health is having trouble</h1>
+          <h1 className="mt-3 text-3xl text-pine-900">Max Petcare is having trouble</h1>
           <p className="mt-3 text-bark-soft">
             The page couldn&apos;t be loaded. This is usually temporary.
           </p>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/../auth";
@@ -43,7 +44,15 @@ export default async function SignInPage({
   if (session?.user) redirect(destination);
 
   return (
-    <main className="mx-auto flex max-w-md flex-col justify-center px-6 py-24">
+    <main className="mx-auto flex max-w-md flex-col justify-center px-6 py-16">
+      <Image
+        src="/logo.webp"
+        alt="Max Petcare"
+        width={800}
+        height={927}
+        priority
+        className="mx-auto mb-6 h-auto w-48"
+      />
       <h1 className="text-3xl text-pine-900">
         {asVet ? "Sign in as a vet" : "Sign in"}
       </h1>

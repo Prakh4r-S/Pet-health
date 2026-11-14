@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Not found · Pet Health" };
+export const metadata = { title: "Not found · Max Petcare" };
 
 /**
  * Shown for a URL that matches nothing, and for records that exist but

@@ -255,7 +255,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="mx-auto max-w-5xl px-6 py-8 text-sm text-bark-soft">
-        Pet Health is a demonstration project. It is not a substitute for
+        Max Petcare is a demonstration project. It is not a substitute for
         emergency veterinary care.
       </footer>
     </main>
