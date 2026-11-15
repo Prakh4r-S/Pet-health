@@ -12,6 +12,7 @@ const rupees = new Intl.NumberFormat("en-IN", {
 
 /** Each kind of reason keeps one colour, so the pills can be told apart at a glance. */
 const REASON_STYLE: Record<MatchReason["kind"], string> = {
+  need: "bg-amber-50 text-amber-900 ring-1 ring-amber-200",
   proximity: "bg-aqua-100 text-navy-900",
   pet: "bg-navy-900 text-white",
   availability: "border border-aqua-600 text-aqua-600",
@@ -42,12 +43,15 @@ function specialtyTags(vet: RecommendedVet) {
 export default function VetCard({
   vet,
   variant = "full",
+  needSlug,
 }: {
   vet: RecommendedVet;
   variant?: "full" | "compact";
+  /** Carried to the vet's page so the booking form starts with it. */
+  needSlug?: string;
 }) {
   const name = vet.user.name ?? "Vet";
-  const href = `/vets/${vet.id}`;
+  const href = needSlug ? `/vets/${vet.id}?need=${needSlug}` : `/vets/${vet.id}`;
   const { reasons, distanceLabel } = vet.match;
   const where = [vet.clinicName ?? "Independent", vet.city?.trim()].filter(Boolean).join(" · ");
 

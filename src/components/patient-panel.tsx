@@ -1,6 +1,7 @@
 "use client";
 
 import type { PatientSummary } from "@/lib/patient-summary";
+import LocalTime from "@/components/local-time";
 
 const statusStyles: Record<string, string> = {
   NEVER_GIVEN: "bg-mist text-ink",
@@ -90,6 +91,42 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
             <p className="mt-1 text-sm text-amber-900">
               {attention.map((v) => v.name).join(", ")}
             </p>
+          </section>
+        )}
+
+        {patient.medications.length > 0 && (
+          <section>
+            <h3 className="font-sans text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Current medication
+            </h3>
+            <ul className="mt-1.5 space-y-2">
+              {patient.medications.map((m) => (
+                <li key={m.prescriptionId} className="text-sm">
+                  {m.drug}
+                  <span className="text-ink-soft">
+                    {" "}
+                    · {m.dose} · {m.frequency}
+                  </span>
+                  {/* Adherence as the owner logged it. Words, not a
+                      colour: "0 of 2" has to be readable at a glance
+                      during a call. */}
+                  {patient.doseLogAvailable && (
+                    <span className="block text-xs text-ink-soft">
+                      Owner logged {m.givenLast24h}
+                      {m.perDay != null && ` of ${m.perDay}`} in the last 24 hours
+                      {m.lastGivenAt ? (
+                        <>
+                          {" "}
+                          · last <LocalTime date={m.lastGivenAt} format="dayTime" />
+                        </>
+                      ) : (
+                        " · none logged yet"
+                      )}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

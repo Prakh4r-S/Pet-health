@@ -88,7 +88,7 @@ export default async function ConsultationRoomPage({
     // access to their own pet's history elsewhere and does not need it
     // during the call; fetching it for them would be needless work and a
     // needless place for a leak.
-    access.isVet ? getPatientSummary(appointment.pet.id) : Promise.resolve(null),
+    access.isVet ? getPatientSummary(appointment.pet.id, user.id) : Promise.resolve(null),
   ]);
 
   return (

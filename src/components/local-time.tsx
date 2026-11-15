@@ -7,6 +7,8 @@ const FORMATS = {
   datetime: { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" },
   /** "14 Sep, 09:30" */
   dayTime: { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" },
+  /** "14 Sep" */
+  day: { day: "numeric", month: "short" },
   /** "09:30" */
   time: { hour: "2-digit", minute: "2-digit" },
 } satisfies Record<string, Intl.DateTimeFormatOptions>;

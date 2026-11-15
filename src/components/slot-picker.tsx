@@ -1,30 +1,22 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { bookAppointment } from "@/app/appointments/actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 import IntakeFields, { type IntakePet } from "@/components/intake-fields";
+import SlotGrid, { slotLabel } from "@/components/slot-grid";
 
+type Props = {
+  vetProfileId: string;
+  pets: IntakePet[];
+  slots: string[];
+  /** Starts the pre-visit brief off, when the owner arrived by picking a symptom. */
+  defaultConcern?: string;
+};
 
-// Slots arrive as ISO strings: a Date cannot cross the server/client
-// boundary intact, and the string is unambiguous about the instant.
-type Props = { vetProfileId: string; pets: IntakePet[]; slots: string[] };
-
-const subscribe = () => () => {};
-
-export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
+export default function SlotPicker({ vetProfileId, pets, slots, defaultConcern }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
-
-  // False on the server and during hydration, true once in the browser.
-  // The times below are grouped and labelled in the viewer's timezone,
-  // which the server does not know: rendering them there would group
-  // slots under UTC days and then disagree with the browser on hydration.
-  const inBrowser = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
 
   if (pets.length === 0) {
     return (
@@ -34,35 +26,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
     );
   }
 
-  // Group by calendar day *in the viewer's own timezone* — the vet's
-  // hours were converted to instants server-side, so the browser can
-  // render them in whatever zone the user is actually in.
-  const byDay = new Map<string, string[]>();
-  for (const iso of slots) {
-    const d = new Date(iso);
-    const key = d.toLocaleDateString(undefined, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-    byDay.set(key, [...(byDay.get(key) ?? []), iso]);
-  }
-
-  if (slots.length === 0) {
-    return (
-      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
-        No times available in the next two weeks.
-      </p>
-    );
-  }
-
-  if (!inBrowser) {
-    return (
-      <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
-        Loading available times...
-      </p>
-    );
-  }
+  if (slots.length === 0) return <SlotGrid slots={slots} selected={null} onSelect={setSelected} />;
 
   return (
     <ActionForm action={bookAppointment} className="grid gap-5" resetOnSuccess={false}>
@@ -71,32 +35,7 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-navy-900">Choose a time</h3>
-        <div className="max-h-80 overflow-y-auto pr-1">
-          {[...byDay.entries()].map(([day, times]) => (
-            <div key={day} className="mb-4">
-              <p className="mb-2 text-xs font-medium text-ink-soft">{day}</p>
-              <div className="flex flex-wrap gap-2">
-                {times.map((iso) => (
-                  <button
-                    key={iso}
-                    type="button"
-                    onClick={() => setSelected(iso)}
-                    className={`rounded-md px-3 py-1.5 text-sm ${
-                      selected === iso
-                        ? "bg-navy-900 text-white"
-                        : "bg-mist hover:bg-aqua-100"
-                    }`}
-                  >
-                    {new Date(iso).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <SlotGrid slots={slots} selected={selected} onSelect={setSelected} />
       </div>
 
       <div className="border-t border-mist pt-5">
@@ -105,17 +44,11 @@ export default function SlotPicker({ vetProfileId, pets, slots }: Props) {
           Your vet reads this before joining, so the call can start with
           the problem rather than with questions about it.
         </p>
-        <IntakeFields pets={pets} />
+        <IntakeFields pets={pets} defaultConcern={defaultConcern} />
       </div>
 
       <SubmitButton disabled={!selected} pendingLabel="Booking...">
-        {selected
-          ? `Book ${new Date(selected).toLocaleString(undefined, {
-              weekday: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}`
-          : "Pick a time"}
+        {selected ? `Book ${slotLabel(selected)}` : "Pick a time"}
       </SubmitButton>
     </ActionForm>
   );

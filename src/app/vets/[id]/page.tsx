@@ -8,6 +8,7 @@ import { distanceKm, formatDistance, toCoordinates } from "@/lib/geo";
 import { isUploadedImageUrl } from "@/lib/upload-rules";
 import SlotPicker from "@/components/slot-picker";
 import PersonAvatar from "@/components/person-avatar";
+import { findCareNeed } from "@/lib/care-needs";
 
 const rupees = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -37,10 +38,14 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 export default async function VetDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ need?: string }>;
 }) {
   const { id } = await params;
+  // Set when the owner came from a symptom chip on the directory.
+  const need = findCareNeed((await searchParams).need);
   const user = await getCurrentUser();
 
   // Selected field by field: this page is shown to any signed-in owner,
@@ -106,7 +111,10 @@ export default async function VetDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/vets" className="text-sm text-ink-soft hover:underline">
+      <Link
+        href={need ? `/vets?need=${need.slug}` : "/vets"}
+        className="text-sm text-ink-soft hover:underline"
+      >
         Back to vets
       </Link>
 
@@ -215,6 +223,7 @@ export default async function VetDetailPage({
             vetProfileId={vet.id}
             pets={pets.map((p) => ({ id: p.id, name: p.name, species: p.species.name }))}
             slots={slots.map((s) => s.startsAt.toISOString())}
+            defaultConcern={need?.concern}
           />
         ) : (
           <p className="rounded-md border border-dashed border-mist-deep p-6 text-center text-sm text-ink-soft">
