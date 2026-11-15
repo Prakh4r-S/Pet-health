@@ -11,6 +11,9 @@ import TranscriptPanel, { type Proposal } from "@/components/transcript-panel";
 import IntakeSummary from "@/components/intake-summary";
 import { ReviewStatusStrip, getReviewStatus } from "@/components/review-status";
 import { intakeFromAppointment } from "@/lib/visit-intake";
+import FollowUpThread from "@/components/follow-up-thread";
+import StatusPill from "@/components/status-pill";
+import { getFollowUpThreads } from "@/lib/follow-up";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +71,11 @@ export default async function ConsultationReviewPage({
   if (!appointment) notFound();
 
   const patient = await getPatientSummary(appointment.pet.id, user.id);
+  const followUps = await getFollowUpThreads(
+    [{ ...appointment, vetProfile: { userId: user.id } }],
+    user.id,
+  );
+  const thread = followUps.threads.get(appointment.id);
 
   const recording = appointment.recording;
   const stalled = recording ? isTranscriptionStale(recording) : false;
@@ -110,6 +118,32 @@ export default async function ConsultationReviewPage({
           ownerName={appointment.owner.name}
         />
       </div>
+
+      {/* Above the record once it exists: after a consultation the
+          owner's question is the thing waiting on the vet. */}
+      {thread && (
+        <section
+          aria-labelledby="follow-up-heading"
+          className="mb-6 rounded-lg border border-mist bg-white p-5"
+        >
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 id="follow-up-heading" className="font-medium">
+              Follow-up from {appointment.owner.name ?? "the owner"}
+            </h2>
+            {thread.open ? (
+              <StatusPill tone="info" icon="clock">Open</StatusPill>
+            ) : (
+              <StatusPill tone="neutral" icon="lock">Closed</StatusPill>
+            )}
+          </div>
+          <FollowUpThread
+            thread={thread}
+            petId={appointment.pet.id}
+            viewer="vet"
+            otherName={appointment.owner.name ?? "the owner"}
+          />
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <NoteEditor

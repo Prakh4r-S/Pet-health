@@ -5,21 +5,21 @@ import {
   type VisitIntake,
   type VisitUrgency,
 } from "@/lib/visit-intake";
+import StatusPill, { type StatusTone } from "@/components/status-pill";
+import type { IconName } from "@/components/icon";
 
-const urgencyBadge: Record<VisitUrgency, string> = {
-  ROUTINE: "bg-mist text-ink",
-  SOON: "bg-amber-100 text-amber-900",
-  URGENT: "bg-red-100 text-red-900",
+const urgencyPill: Record<VisitUrgency, { tone: StatusTone; icon: IconName }> = {
+  ROUTINE: { tone: "neutral", icon: "info" },
+  SOON: { tone: "warning", icon: "clock" },
+  URGENT: { tone: "danger", icon: "alert" },
 };
 
 export function UrgencyBadge({ urgency }: { urgency: VisitUrgency | null }) {
   if (!urgency) return null;
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${urgencyBadge[urgency]}`}
-    >
+    <StatusPill tone={urgencyPill[urgency].tone} icon={urgencyPill[urgency].icon}>
       {URGENCY_LABELS[urgency]}
-    </span>
+    </StatusPill>
   );
 }
 

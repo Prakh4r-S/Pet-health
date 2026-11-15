@@ -117,19 +117,30 @@ export default function AssistantChat({ hasPets }: { hasPets: boolean }) {
               )}
             </div>
           ))}
-          {busy && <p className="text-sm text-ink-faint">Reading the records...</p>}
+          {busy && (
+            <p role="status" className="text-sm text-ink-soft">
+              Reading the records...
+            </p>
+          )}
           <div ref={endRef} />
         </div>
       )}
 
       {error && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+        <p
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900"
+        >
           {error}
         </p>
       )}
 
       <div className="flex gap-2">
+        <label htmlFor="assistant-question" className="sr-only">
+          Your question
+        </label>
         <input
+          id="assistant-question"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {

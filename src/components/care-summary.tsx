@@ -4,38 +4,11 @@ import SubmitButton from "@/components/submit-button";
 import LocalTime from "@/components/local-time";
 import { markDoseGiven, undoDose } from "@/app/pets/care-actions";
 import type { CareMedication, CareVaccine, PetCare } from "@/lib/care";
+import Icon from "@/components/icon";
 
-/**
- * Small line icons for the badges. Every badge pairs one with words:
- * the colour is a third signal, never the only one, so the card reads
- * the same in greyscale and to a screen reader (which gets the words —
- * the icons are hidden from it).
- */
-const ICON_PATHS = {
-  alert: "M12 9v4m0 4h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z",
-  clock: "M12 7v5l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
-  check: "m5 13 4 4L19 7",
-  dash: "M8 12h8m5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
-  pill: "m10.5 20.5 10-10a4.95 4.95 0 0 0-7-7l-10 10a4.95 4.95 0 0 0 7 7Zm-2-12 7 7",
-  syringe: "m18 2 4 4m-5 1 3-3m-1 5L9.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L16 5m-7 6 2 2m-6 6-3 3m12-13 2 2",
-} as const;
-
-function Icon({ name, className = "h-3.5 w-3.5" }: { name: keyof typeof ICON_PATHS; className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={`shrink-0 ${className}`}
-    >
-      <path d={ICON_PATHS[name]} />
-    </svg>
-  );
-}
+// Every badge below pairs an icon with words: the colour is a third
+// signal, never the only one, so the card reads the same in greyscale
+// and to a screen reader.
 
 const badge = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium";
 

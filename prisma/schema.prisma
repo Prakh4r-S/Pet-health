@@ -52,9 +52,10 @@ model User {
   vetProfile   VetProfile?
   appointments Appointment[]
 
-  uploadedDocuments Document[]       @relation("UploadedDocuments")
+  uploadedDocuments Document[]        @relation("UploadedDocuments")
   amendments        NoteAmendment[]
   dosesLogged       MedicationDose[]
+  followUpMessages  FollowUpMessage[]
 }
 
 // ---------------------------------------------------------------
@@ -436,6 +437,7 @@ model Appointment {
   documents Document[]
   note      ConsultationNote?
   recording ConsultationRecording?
+  followUps FollowUpMessage[]
 
   @@index([vetProfileId, startsAt])
   @@index([ownerId, startsAt])
@@ -471,6 +473,8 @@ model Document {
   pet         Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
   uploadedBy  User         @relation("UploadedDocuments", fields: [uploadedById], references: [id])
   appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  followUpMessage FollowUpMessage?
 
   @@index([petId, createdAt])
   @@index([appointmentId])
@@ -604,4 +608,31 @@ model ConsultationRecording {
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@index([status])
+}
+
+/// One message in the short thread that stays open after a consultation,
+/// for the question the owner thinks of on the way home: "with food or
+/// without?", "is this swelling normal?".
+///
+/// Deliberately not a chat system. A thread belongs to one completed
+/// appointment, is open for 48 hours, and then is read-only — anything
+/// that needs longer than that needs another consultation, and the vet
+/// should not be on the hook indefinitely for a visit that has ended.
+///
+/// A photo is an ordinary Document on the pet's record, linked from
+/// here, so it is stored, access-checked and listed like every other
+/// file rather than through a second mechanism.
+model FollowUpMessage {
+  id            String   @id @default(cuid())
+  appointmentId String
+  authorId      String
+  body          String
+  documentId    String?  @unique
+  createdAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  document    Document?   @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@index([appointmentId, createdAt])
 }

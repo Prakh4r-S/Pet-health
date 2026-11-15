@@ -234,11 +234,13 @@ export default function SnapshotTool({
           <button
             type="button"
             onClick={() => void capture()}
-            className="rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700"
+            className="min-h-11 rounded-md bg-navy-900 px-4 py-1.5 text-sm text-white hover:bg-navy-700"
           >
             Take snapshot
           </button>
-          <span className="text-xs text-ink-soft">
+          {/* Announced when it changes: the result of a capture or a
+              save is otherwise only visible. */}
+          <span role="status" className="text-xs text-ink-soft">
             {message ?? "Captures the owner's camera so you can mark it up."}
           </span>
         </div>
@@ -261,6 +263,8 @@ export default function SnapshotTool({
         onPointerMove={onPointerMove}
         onPointerUp={() => setDrawing(false)}
         onPointerLeave={() => setDrawing(false)}
+        role="img"
+        aria-label="Captured snapshot. Draw on it with a mouse or finger to mark it up."
         className="w-full cursor-crosshair rounded-md border border-mist touch-none"
       />
       <SnapshotControls
@@ -276,7 +280,9 @@ export default function SnapshotTool({
         }}
         onSave={save}
       />
-      {message && <p className="mt-2 text-xs text-ink-soft">{message}</p>}
+      <p role="status" className="mt-2 text-xs text-ink-soft">
+        {message}
+      </p>
       <SnapshotStrip snapshots={saved} />
     </div>
   );
@@ -297,23 +303,27 @@ function SnapshotControls({
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2">
+      <label htmlFor="snapshot-note" className="sr-only">
+        What does this snapshot show?
+      </label>
       <input
+        id="snapshot-note"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="What does this show?"
-        className="min-w-40 flex-1 rounded-md border border-mist-deep px-3 py-1.5 text-sm"
+        className="min-h-11 min-w-40 flex-1 rounded-md border border-mist-deep px-3 py-1.5 text-sm"
       />
       <button
         type="button"
         onClick={onUndo}
-        className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-aqua-100"
+        className="min-h-11 rounded-md bg-mist px-4 py-1.5 text-sm hover:bg-aqua-100"
       >
         Undo
       </button>
       <button
         type="button"
         onClick={onDiscard}
-        className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-aqua-100"
+        className="min-h-11 rounded-md bg-mist px-4 py-1.5 text-sm hover:bg-aqua-100"
       >
         Discard
       </button>
@@ -321,7 +331,7 @@ function SnapshotControls({
         type="button"
         disabled={saving}
         onClick={() => onSave(note)}
-        className="rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700 disabled:opacity-60"
+        className="min-h-11 rounded-md bg-navy-900 px-4 py-1.5 text-sm text-white hover:bg-navy-700 disabled:opacity-60"
       >
         {saving ? "Saving..." : "Save to record"}
       </button>

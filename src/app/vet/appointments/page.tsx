@@ -13,6 +13,9 @@ import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
 import { cancelAppointment } from "@/app/appointments/actions";
+import StatusPill, { type StatusTone } from "@/components/status-pill";
+import type { IconName } from "@/components/icon";
+import { getFollowUpThreads } from "@/lib/follow-up";
 
 const PAST_LIMIT = 50;
 
@@ -20,13 +23,13 @@ const PAST_LIMIT = 50;
 function recordStatus(
   status: string,
   note: { status: string } | null,
-): { text: string; className: string } {
-  if (status === "CANCELLED") return { text: "Cancelled", className: "bg-red-50 text-red-700" };
+): { text: string; tone: StatusTone; icon: IconName } {
+  if (status === "CANCELLED") return { text: "Cancelled", tone: "danger", icon: "cross" };
   if (note?.status === "FINALISED") {
-    return { text: "Record finalised", className: "bg-aqua-100 text-navy-900" };
+    return { text: "Record finalised", tone: "ok", icon: "lock" };
   }
-  if (note) return { text: "Draft record", className: "bg-amber-100 text-amber-800" };
-  return { text: "No record yet", className: "bg-mist text-ink" };
+  if (note) return { text: "Draft record", tone: "warning", icon: "pencil" };
+  return { text: "No record yet", tone: "neutral", icon: "dash" };
 }
 
 export default async function VetAppointmentsPage() {
@@ -58,11 +61,16 @@ export default async function VetAppointmentsPage() {
         vetProfileId: profile.id,
         OR: [{ status: { not: "SCHEDULED" } }, { endsAt: { lt: cutoff } }],
       },
-      include: { pet, note: { select: { status: true } } },
+      include: { pet, note: { select: { status: true, finalisedAt: true } } },
       orderBy: { startsAt: "desc" },
       take: PAST_LIMIT,
     }),
   ]);
+
+  const followUps = await getFollowUpThreads(
+    past.map((a) => ({ ...a, vetProfile: { userId: profile.userId } })),
+    profile.userId,
+  );
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
@@ -93,9 +101,9 @@ export default async function VetAppointmentsPage() {
                   <p className="font-medium">
                     <LocalTime date={a.startsAt.toISOString()} />
                     {started && (
-                      <span className="ml-2 rounded-full bg-aqua-100 px-2 py-0.5 text-xs font-normal text-navy-900">
+                      <StatusPill tone="ok" icon="live" className="ml-2 align-middle">
                         In progress
-                      </span>
+                      </StatusPill>
                     )}
                   </p>
                   <p className="text-sm text-ink-soft">
@@ -141,7 +149,7 @@ export default async function VetAppointmentsPage() {
                       <input type="hidden" name="id" value={a.id} />
                       <SubmitButton
                         pendingLabel="Cancelling..."
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-700 hover:underline"
                       >
                         Cancel
                       </SubmitButton>
@@ -165,6 +173,9 @@ export default async function VetAppointmentsPage() {
               const record = recordStatus(a.status, a.note);
               const cancelled = a.status === "CANCELLED";
               const finalised = a.note?.status === "FINALISED";
+              // The owner spoke last: there is a question waiting.
+              const lastMessage = followUps.threads.get(a.id)?.messages.at(-1);
+              const awaitingReply = lastMessage ? !lastMessage.fromVet : false;
 
               return (
                 <li
@@ -183,9 +194,12 @@ export default async function VetAppointmentsPage() {
                     {a.reason && <p className="mt-0.5 text-xs text-ink-soft">{a.reason}</p>}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${record.className}`}>
-                      {record.text}
-                    </span>
+                    <StatusPill tone={record.tone} icon={record.icon}>{record.text}</StatusPill>
+                    {awaitingReply && (
+                      <StatusPill tone="warning" icon="message">
+                        Follow-up question
+                      </StatusPill>
+                    )}
                     {/* A cancelled appointment confers no access to the
                         patient's records, so there is nothing to review. */}
                     {!cancelled && (

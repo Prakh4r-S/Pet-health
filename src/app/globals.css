@@ -11,14 +11,17 @@
      but too light to pass as small text on white. aqua-600 is the same
      hue darkened until it does. */
   --color-aqua-400: #4c9c9c;
-  --color-aqua-600: #2c7c7d;
+  --color-aqua-600: #256f70;
   --color-aqua-100: #d9ecec;
   --color-aqua-50: #f0f7f7;
 
   --color-ink: #171c2b;
   --color-ink-soft: #535a6b;
-  /* Placeholder and "nothing here yet" text: present, but not competing. */
-  --color-ink-faint: #858b99;
+  /* Placeholder and "nothing here yet" text: present, but not competing.
+     As light as it can go while keeping 4.5:1 against the cream page,
+     white cards and the palest tints (WCAG 1.4.3) — quiet is fine,
+     unreadable is not. */
+  --color-ink-faint: #666d7c;
   /* The page itself: a warm off-white rather than paper white, so long
      pages of records are easier on the eye and the white of a form
      field or a raised card reads as a surface on top of it. Picked warm
@@ -94,4 +97,31 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* The video call's controls come from LiveKit and carry its styling.
+   Two things it does not guarantee are set here.
+
+   Size: every control is at least 44 CSS pixels each way, so it can be
+   hit with a thumb on a phone held in one hand while the other holds
+   the animal (WCAG 2.5.8 asks for 24; 44 is the size touch platforms
+   recommend). The narrow chevron beside each device button is the one
+   that falls short on its own.
+
+   Focus: the call sits on a near-black background, where the site's
+   teal focus ring all but disappears. Inside it the ring is white with
+   a dark edge, visible against both the video and the control bar. */
+.call-controls {
+  --lk-control-bar-height: 72px;
+}
+
+.call-controls button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.call-controls :focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #0c1c44;
 }

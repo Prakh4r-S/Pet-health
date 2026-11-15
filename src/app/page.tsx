@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getOptionalUser } from "@/lib/current-user";
+import StatusPill from "@/components/status-pill";
 
 export const dynamic = "force-dynamic";
 
@@ -100,17 +101,13 @@ function RecordPreview() {
             <span>
               Rabies <span className="text-xs text-ink-soft">· core</span>
             </span>
-            <span className="rounded-full bg-aqua-100 px-2.5 py-0.5 text-xs text-navy-900">
-              Up to date
-            </span>
+            <StatusPill tone="ok">Up to date</StatusPill>
           </li>
           <li className="flex items-center justify-between py-2.5">
             <span>
               DHPP <span className="text-xs text-ink-soft">· core</span>
             </span>
-            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs text-amber-800">
-              Due in 12 days
-            </span>
+            <StatusPill tone="warning">Due in 12 days</StatusPill>
           </li>
           <li className="flex items-center justify-between py-2.5">
             <span>Blood panel</span>

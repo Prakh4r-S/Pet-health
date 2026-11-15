@@ -154,12 +154,19 @@ function SuggestedPrescriptions({
                   </p>
                   <div className="flex flex-wrap items-end gap-2">
                     <div className="w-36">
-                      <label className={label}>Drug</label>
-                      <input name="drug" className={field} defaultValue={m.drug} required />
+                      <label className={label} htmlFor={`proposed-${i}-drug`}>Drug</label>
+                      <input
+                        id={`proposed-${i}-drug`}
+                        name="drug"
+                        className={field}
+                        defaultValue={m.drug}
+                        required
+                      />
                     </div>
                     <div className="w-24">
-                      <label className={label}>Dose</label>
+                      <label className={label} htmlFor={`proposed-${i}-dose`}>Dose</label>
                       <input
+                        id={`proposed-${i}-dose`}
                         name="dose"
                         className={field}
                         defaultValue={m.dose ?? ""}
@@ -168,8 +175,9 @@ function SuggestedPrescriptions({
                       />
                     </div>
                     <div className="w-32">
-                      <label className={label}>Frequency</label>
+                      <label className={label} htmlFor={`proposed-${i}-frequency`}>Frequency</label>
                       <input
+                        id={`proposed-${i}-frequency`}
                         name="frequency"
                         className={field}
                         defaultValue={m.frequency ?? ""}
@@ -178,8 +186,9 @@ function SuggestedPrescriptions({
                       />
                     </div>
                     <div className="w-20">
-                      <label className={label}>Days</label>
+                      <label className={label} htmlFor={`proposed-${i}-durationDays`}>Days</label>
                       <input
+                        id={`proposed-${i}-durationDays`}
                         name="durationDays"
                         type="number"
                         min="1"
@@ -259,7 +268,7 @@ function Prescriptions({
                   <input type="hidden" name="id" value={p.id} />
                   <SubmitButton
                     pendingLabel="Removing..."
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-red-700 hover:underline"
                   >
                     Remove
                   </SubmitButton>
@@ -525,7 +534,11 @@ export default function NoteEditor({
           {locked && (
             <ActionForm action={addAmendment} className="mt-4 grid gap-2">
               <input type="hidden" name="appointmentId" value={appointmentId} />
+              <label htmlFor="amendment-body" className={label}>
+                Add an amendment
+              </label>
               <textarea
+                id="amendment-body"
                 name="body"
                 rows={3}
                 className={field}

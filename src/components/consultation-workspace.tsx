@@ -9,6 +9,8 @@ import SnapshotTool from "@/components/snapshot-tool";
 import type { PatientSummary } from "@/lib/patient-summary";
 import NotesPanel from "@/components/notes-panel";
 import CallRecorder from "@/components/call-recorder";
+import PreCallCheck, { type CallMediaChoice } from "@/components/pre-call-check";
+import CallControlLabels from "@/components/call-control-labels";
 
 /**
  * Holds the call, the records panel and the snapshot tool in one mounted
@@ -38,6 +40,11 @@ export default function ConsultationWorkspace({
 }) {
   const router = useRouter();
   const [panelOpen, setPanelOpen] = useState(false);
+  // Null until the pre-call check is passed. The call is not connected,
+  // and the other side is not notified, before then.
+  const [media, setMedia] = useState<CallMediaChoice | null>(null);
+
+  if (!media) return <PreCallCheck onJoin={setMedia} />;
 
   return (
     <div>
@@ -45,8 +52,8 @@ export default function ConsultationWorkspace({
         token={token}
         serverUrl={serverUrl}
         connect
-        video
-        audio
+        video={media.video}
+        audio={media.audio}
         onDisconnected={() => router.push(onLeaveHref)}
       >
         {/* One column on phones and tablets, two from 1024px.
@@ -59,12 +66,9 @@ export default function ConsultationWorkspace({
               everything beneath it. Scoped to the video alone: applied
               to the whole room it turned the records panel and the
               tools below into white text on white cards. */}
-          <div
-            data-lk-theme="default"
-            className="h-[60vh] min-h-80 overflow-hidden rounded-lg lg:col-start-1 lg:h-[560px]"
-          >
+          <CallControlLabels className="call-controls h-[60vh] min-h-80 overflow-hidden rounded-lg lg:col-start-1 lg:h-[560px]">
             <VideoConference />
-          </div>
+          </CallControlLabels>
 
           {patient && (
             <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
@@ -73,7 +77,8 @@ export default function ConsultationWorkspace({
                 onClick={() => setPanelOpen((v) => !v)}
                 aria-expanded={panelOpen}
                 aria-controls="patient-records"
-                className="flex w-full items-center justify-between rounded-md border border-mist bg-white px-3 py-2 text-sm font-medium hover:bg-aqua-50"
+                aria-label={`${panelOpen ? "Hide" : "Show"} patient records for ${patient.name}`}
+                className="flex min-h-11 w-full items-center justify-between rounded-md border border-mist bg-white px-3 py-2 text-sm font-medium hover:bg-aqua-50"
               >
                 <span>Patient records · {patient.name}</span>
                 <span className="text-ink-soft">{panelOpen ? "Hide" : "Show"}</span>

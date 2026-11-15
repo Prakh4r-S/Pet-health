@@ -2,20 +2,7 @@
 
 import type { PatientSummary } from "@/lib/patient-summary";
 import LocalTime from "@/components/local-time";
-
-const statusStyles: Record<string, string> = {
-  NEVER_GIVEN: "bg-mist text-ink",
-  OVERDUE: "bg-red-100 text-red-800",
-  DUE_SOON: "bg-amber-100 text-amber-800",
-  UP_TO_DATE: "bg-aqua-100 text-navy-900",
-};
-
-const statusLabels: Record<string, string> = {
-  NEVER_GIVEN: "No record",
-  OVERDUE: "Overdue",
-  DUE_SOON: "Due soon",
-  UP_TO_DATE: "Up to date",
-};
+import StatusPill, { VACCINE_PILL } from "@/components/status-pill";
 
 const kindLabels: Record<string, string> = {
   LAB_REPORT: "Lab report",
@@ -205,13 +192,12 @@ export default function PatientPanel({ patient }: { patient: PatientSummary }) {
                     </span>
                   )}
                 </span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                    statusStyles[v.status] ?? "bg-mist"
-                  }`}
+                <StatusPill
+                  tone={VACCINE_PILL[v.status]?.tone ?? "neutral"}
+                  icon={VACCINE_PILL[v.status]?.icon}
                 >
-                  {statusLabels[v.status] ?? v.status}
-                </span>
+                  {VACCINE_PILL[v.status]?.label ?? v.status}
+                </StatusPill>
               </li>
             ))}
           </ul>

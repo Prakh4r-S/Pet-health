@@ -229,26 +229,26 @@ export default function CallRecorder({ appointmentId }: { appointmentId: string 
           <button
             type="button"
             onClick={start}
-            className="rounded-md bg-navy-900 px-3 py-1.5 text-sm text-white hover:bg-navy-700"
+            className="min-h-11 rounded-md bg-navy-900 px-4 py-1.5 text-sm text-white hover:bg-navy-700"
           >
             {state === "error" ? "Try recording again" : "Record for notes"}
           </button>
         ) : state === "recording" ? (
           <>
             <span className="flex items-center gap-2 text-sm">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+              <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-red-600" />
               Recording {mmss}
             </span>
             <button
               type="button"
               onClick={() => void stop()}
-              className="rounded-md bg-mist px-3 py-1.5 text-sm hover:bg-aqua-100"
+              className="min-h-11 rounded-md bg-mist px-4 py-1.5 text-sm hover:bg-aqua-100"
             >
               Stop and save
             </button>
           </>
         ) : (
-          <span className="text-sm text-ink-soft">
+          <span role="status" className="text-sm text-ink-soft">
             {state === "uploading" ? `Uploading ${Math.round(progress)}%` : "Saved"}
           </span>
         )}

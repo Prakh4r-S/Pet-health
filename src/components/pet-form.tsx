@@ -57,10 +57,14 @@ export default function PetForm({ species }: { species: Species[] }) {
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
+        <label className={`${label} mt-3`} htmlFor="breedFreeText">
+          Or describe the mix
+        </label>
         <input
+          id="breedFreeText"
           name="breedFreeText"
-          className={`${field} mt-2`}
-          placeholder="Or describe the mix, e.g. Labrador x Indie"
+          className={field}
+          placeholder="e.g. Labrador x Indie"
         />
       </div>
 

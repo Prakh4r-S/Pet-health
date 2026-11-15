@@ -13,18 +13,23 @@ import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 
 import { cancelAppointment } from "./actions";
+import StatusPill, { type StatusTone } from "@/components/status-pill";
+import type { IconName } from "@/components/icon";
+import FollowUpThread from "@/components/follow-up-thread";
+import Icon from "@/components/icon";
+import { getFollowUpThreads } from "@/lib/follow-up";
 
 const card = "rounded-lg border border-mist p-4";
 
 const PAST_LIMIT = 50;
 
-const pastLabels: Record<string, { text: string; className: string }> = {
-  COMPLETED: { text: "completed", className: "text-navy-700" },
-  CANCELLED: { text: "cancelled", className: "text-red-600" },
-  NO_SHOW: { text: "missed", className: "text-ink-soft" },
+const pastLabels: Record<string, { text: string; tone: StatusTone; icon: IconName }> = {
+  COMPLETED: { text: "Completed", tone: "ok", icon: "checkCircle" },
+  CANCELLED: { text: "Cancelled", tone: "danger", icon: "cross" },
+  NO_SHOW: { text: "Missed", tone: "neutral", icon: "dash" },
   // Still SCHEDULED but the room has closed: the call window is over and
   // the vet has not finalised a record yet.
-  SCHEDULED: { text: "ended", className: "text-ink-soft" },
+  SCHEDULED: { text: "Ended", tone: "neutral", icon: "clock" },
 };
 
 export default async function AppointmentsPage({
@@ -39,7 +44,7 @@ export default async function AppointmentsPage({
   const cutoff = liveEndsAtCutoff(now);
 
   const include = {
-    pet: { select: { name: true } },
+    pet: { select: { id: true, name: true } },
     vetProfile: { include: { user: { select: { name: true } } } },
   } as const;
 
@@ -63,6 +68,8 @@ export default async function AppointmentsPage({
       take: PAST_LIMIT,
     }),
   ]);
+
+  const followUps = await getFollowUpThreads(past, user.id);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
@@ -103,9 +110,9 @@ export default async function AppointmentsPage({
                   <p className="font-medium">
                     <LocalTime date={a.startsAt.toISOString()} />
                     {started && (
-                      <span className="ml-2 rounded-full bg-aqua-100 px-2 py-0.5 text-xs font-normal text-navy-900">
+                      <StatusPill tone="ok" icon="live" className="ml-2 align-middle">
                         In progress
-                      </span>
+                      </StatusPill>
                     )}
                   </p>
                   <p className="text-sm text-ink-soft">
@@ -152,7 +159,7 @@ export default async function AppointmentsPage({
                       <input type="hidden" name="id" value={a.id} />
                       <SubmitButton
                         pendingLabel="Cancelling..."
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-700 hover:underline"
                       >
                         Cancel
                       </SubmitButton>
@@ -174,6 +181,7 @@ export default async function AppointmentsPage({
               // Null unless the vet has finalised it — a draft is not
               // shown, however far along it is.
               const record = toOwnerRecord(a.note);
+              const thread = followUps.threads.get(a.id);
               return (
                 <li key={a.id} className="rounded-md border border-mist p-3 text-sm">
                   <div className="flex items-start justify-between gap-4">
@@ -188,9 +196,36 @@ export default async function AppointmentsPage({
                       {a.reason && <p className="mt-0.5 text-xs text-ink-soft">{a.reason}</p>}
                     </div>
                     {label && (
-                      <span className={`shrink-0 text-xs ${label.className}`}>{label.text}</span>
+                      <StatusPill tone={label.tone} icon={label.icon}>
+                        {label.text}
+                      </StatusPill>
                     )}
                   </div>
+
+                  {/* Open by default while it can still be written to, or
+                      once there is something in it to read. */}
+                  {thread && (thread.open || thread.messages.length > 0) && (
+                    <details className="mt-2" open={thread.open}>
+                      <summary className="flex min-h-6 cursor-pointer select-none items-center gap-1.5 text-sm text-navy-700 hover:text-navy-900">
+                        <Icon name="message" />
+                        Follow-up with {a.vetProfile.user.name ?? "the vet"}
+                        {thread.messages.length > 0 && ` · ${thread.messages.length}`}
+                        {thread.open && (
+                          <StatusPill tone="info" icon="clock" className="ml-1">
+                            Open
+                          </StatusPill>
+                        )}
+                      </summary>
+                      <div className="mt-3 rounded-md border border-mist bg-white p-4">
+                        <FollowUpThread
+                          thread={thread}
+                          petId={a.pet.id}
+                          viewer="owner"
+                          otherName={a.vetProfile.user.name ?? "the vet"}
+                        />
+                      </div>
+                    </details>
+                  )}
 
                   {record ? (
                     <details className="mt-2">

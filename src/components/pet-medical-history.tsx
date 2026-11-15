@@ -7,16 +7,11 @@ import {
   removeCondition,
   resolveCondition,
 } from "@/app/pets/[id]/actions";
+import StatusPill, { SEVERITY_PILL } from "@/components/status-pill";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const label = "mb-1 block text-xs text-ink-soft";
 const textButton = "text-xs hover:underline";
-
-const severityStyles: Record<string, { text: string; className: string }> = {
-  SEVERE: { text: "severe", className: "bg-red-100 text-red-800" },
-  MODERATE: { text: "moderate", className: "bg-amber-100 text-amber-800" },
-  MILD: { text: "mild", className: "bg-mist text-ink" },
-};
 
 export type AllergyRow = {
   id: string;
@@ -61,15 +56,15 @@ export default function PetMedicalHistory({
       ) : (
         <ul className="mt-1 divide-y divide-mist">
           {allergies.map((a) => {
-            const severity = severityStyles[a.severity];
+            const severity = SEVERITY_PILL[a.severity];
             return (
               <li key={a.id} className="flex items-start justify-between gap-4 py-2.5">
                 <div className="text-sm">
                   <span className="font-medium">{a.allergen}</span>
                   {severity && (
-                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${severity.className}`}>
-                      {severity.text}
-                    </span>
+                    <StatusPill tone={severity.tone} icon={severity.icon} className="ml-2 align-middle">
+                      {severity.label}
+                    </StatusPill>
                   )}
                   {a.reaction && <p className="text-xs text-ink-soft">{a.reaction}</p>}
                 </div>
@@ -81,7 +76,7 @@ export default function PetMedicalHistory({
                   >
                     <input type="hidden" name="petId" value={petId} />
                     <input type="hidden" name="id" value={a.id} />
-                    <SubmitButton pendingLabel="Removing..." className={`${textButton} text-red-600`}>
+                    <SubmitButton pendingLabel="Removing..." className={`${textButton} text-red-700`}>
                       Remove
                     </SubmitButton>
                   </ActionForm>
@@ -174,7 +169,7 @@ export default function PetMedicalHistory({
                   >
                     <input type="hidden" name="petId" value={petId} />
                     <input type="hidden" name="id" value={c.id} />
-                    <SubmitButton pendingLabel="Removing..." className={`${textButton} text-red-600`}>
+                    <SubmitButton pendingLabel="Removing..." className={`${textButton} text-red-700`}>
                       Remove
                     </SubmitButton>
                   </ActionForm>

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import { getPetAccess } from "@/lib/pet-access";
-import { getVaccineStandings, type VaccineStatus } from "@/lib/vaccine-status";
+import { getVaccineStandings } from "@/lib/vaccine-status";
 import { logVaccination, logWeight } from "./actions";
 import WeightChart from "@/components/weight-chart";
 import DocumentsSection from "@/components/documents-section";
@@ -19,17 +19,11 @@ import SubmitButton from "@/components/submit-button";
 import PetAvatar from "@/components/pet-avatar";
 import CareSummary from "@/components/care-summary";
 import { getCareForPets } from "@/lib/care";
+import StatusPill, { VACCINE_PILL } from "@/components/status-pill";
 
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const card = "rounded-lg border border-mist p-5";
-
-const statusStyles: Record<VaccineStatus, { label: string; className: string }> = {
-  NEVER_GIVEN: { label: "No record", className: "bg-mist text-ink" },
-  OVERDUE: { label: "Overdue", className: "bg-red-100 text-red-800" },
-  DUE_SOON: { label: "Due soon", className: "bg-amber-100 text-amber-800" },
-  UP_TO_DATE: { label: "Up to date", className: "bg-aqua-100 text-navy-900" },
-};
 
 function fmt(d: Date | null) {
   return d ? d.toISOString().slice(0, 10) : "—";
@@ -324,7 +318,7 @@ export default async function PetDetailPage({
 
         <ul className="divide-y divide-mist">
           {standings.map((s) => {
-            const style = statusStyles[s.status];
+            const pill = VACCINE_PILL[s.status];
             return (
               <li key={s.vaccineTypeId} className="flex items-center justify-between py-3">
                 <div>
@@ -338,9 +332,9 @@ export default async function PetDetailPage({
                     Last given {fmt(s.lastGivenOn)} · Next due {fmt(s.nextDueOn)}
                   </p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs ${style.className}`}>
-                  {style.label}
-                </span>
+                <StatusPill tone={pill.tone} icon={pill.icon}>
+                  {pill.label}
+                </StatusPill>
               </li>
             );
           })}

@@ -102,7 +102,7 @@ export default function PassportCard({
               <input type="hidden" name="petId" value={petId} />
               <SubmitButton
                 pendingLabel="Turning off..."
-                className="text-sm text-red-600 hover:underline"
+                className="text-sm text-red-700 hover:underline"
               >
                 Stop sharing
               </SubmitButton>

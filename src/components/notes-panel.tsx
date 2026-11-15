@@ -43,12 +43,15 @@ export default function NotesPanel({ appointmentId }: { appointmentId: string })
   return (
     <div className="rounded-lg border border-mist bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-medium">Notes</h3>
-        <span className="text-xs text-ink-faint">
+        <label htmlFor="call-notes" className="text-sm font-medium">
+          Notes
+        </label>
+        <span role="status" className="text-xs text-ink-soft">
           {status === "saving" ? "Saving..." : status === "saved" ? "Saved" : ""}
         </span>
       </div>
       <textarea
+        id="call-notes"
         value={value}
         onChange={(e) => {
           dirty.current = true;
