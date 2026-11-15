@@ -1,3 +1,6 @@
+import StatusPill, { type StatusTone } from "@/components/status-pill";
+import type { IconName } from "@/components/icon";
+
 /**
  * Where a consultation write-up stands, as one word the vet can read at
  * a glance.
@@ -29,11 +32,11 @@ export function getReviewStatus({
   return "DRAFT";
 }
 
-const STYLES: Record<ReviewStatus, string> = {
-  DRAFT: "bg-mist text-ink border-mist-deep",
-  TRANSCRIBING: "bg-amber-50 text-amber-900 border-amber-200",
-  READY: "bg-aqua-100 text-navy-900 border-aqua-400",
-  FINALIZED: "bg-navy-900 text-white border-navy-900",
+const PILLS: Record<ReviewStatus, { tone: StatusTone; icon: IconName }> = {
+  DRAFT: { tone: "neutral", icon: "pencil" },
+  TRANSCRIBING: { tone: "warning", icon: "clock" },
+  READY: { tone: "ok", icon: "checkCircle" },
+  FINALIZED: { tone: "solid", icon: "lock" },
 };
 
 const DESCRIPTIONS: Record<ReviewStatus, string> = {
@@ -50,16 +53,14 @@ export function ReviewStatusBadge({
   status: ReviewStatus;
   size?: "sm" | "md";
 }) {
-  const pad = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs";
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-semibold tracking-wide ${pad} ${STYLES[status]}`}
+    <StatusPill
+      tone={PILLS[status].tone}
+      icon={PILLS[status].icon}
+      className={`tracking-wide ${size === "sm" ? "text-[11px]" : "px-2.5 py-1"}`}
     >
-      {status === "TRANSCRIBING" && (
-        <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-amber-600" />
-      )}
       {status}
-    </span>
+    </StatusPill>
   );
 }
 

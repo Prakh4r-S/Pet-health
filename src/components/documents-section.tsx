@@ -77,7 +77,7 @@ export default function DocumentsSection({
                   <input type="hidden" name="id" value={d.id} />
                   <SubmitButton
                     pendingLabel="Removing..."
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-red-700 hover:underline"
                   >
                     Remove
                   </SubmitButton>

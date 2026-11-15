@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPassportView } from "@/lib/passport";
 import PetAvatar from "@/components/pet-avatar";
+import StatusPill, { SEVERITY_PILL, VACCINE_PILL } from "@/components/status-pill";
 
 export const dynamic = "force-dynamic";
 
@@ -19,19 +20,6 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-const vaccineStyles: Record<string, { label: string; className: string }> = {
-  NEVER_GIVEN: { label: "No record", className: "bg-mist text-ink" },
-  OVERDUE: { label: "Overdue", className: "bg-red-100 text-red-800" },
-  DUE_SOON: { label: "Due soon", className: "bg-amber-100 text-amber-800" },
-  UP_TO_DATE: { label: "Up to date", className: "bg-aqua-100 text-navy-900" },
-};
-
-const severityLabels: Record<string, string> = {
-  SEVERE: "Severe",
-  MODERATE: "Moderate",
-  MILD: "Mild",
-};
-
 function describeAge(months: number | null, approx: boolean) {
   if (months === null) return null;
   const years = Math.floor(months / 12);
@@ -41,9 +29,18 @@ function describeAge(months: number | null, approx: boolean) {
   return approx ? `about ${text}` : text;
 }
 
-function Fact({ label, value }: { label: string; value: string | null }) {
+function Fact({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string | null;
+  /** On the group itself: a <dl> may hold only one wrapper around each pair. */
+  className?: string;
+}) {
   return (
-    <div>
+    <div className={className}>
       <dt className="text-xs text-ink-soft">{label}</dt>
       <dd className="mt-0.5 text-sm font-medium">{value ?? "Not recorded"}</dd>
     </div>
@@ -120,10 +117,14 @@ export default async function PassportPage({
             {pet.allergies.map((a, i) => (
               <li key={i} className="text-red-900">
                 <span className="font-semibold">{a.allergen}</span>
-                {severityLabels[a.severity] && (
-                  <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
-                    {severityLabels[a.severity]}
-                  </span>
+                {SEVERITY_PILL[a.severity] && (
+                  <StatusPill
+                    tone={SEVERITY_PILL[a.severity].tone}
+                    icon={SEVERITY_PILL[a.severity].icon}
+                    className="ml-2 align-middle"
+                  >
+                    {SEVERITY_PILL[a.severity].label}
+                  </StatusPill>
                 )}
                 {a.reaction && <p className="text-sm text-red-800">{a.reaction}</p>}
               </li>
@@ -229,9 +230,7 @@ export default async function PassportPage({
             label="Neutered"
             value={pet.neutered === true ? "Yes" : pet.neutered === false ? "No" : null}
           />
-          <div className="col-span-2">
-            <Fact label="Microchip number" value={pet.microchipNumber} />
-          </div>
+          <Fact label="Microchip number" value={pet.microchipNumber} className="col-span-2" />
         </dl>
       </section>
 
@@ -241,7 +240,7 @@ export default async function PassportPage({
         </h2>
         <ul className="mt-2 divide-y divide-mist">
           {pet.vaccines.map((v, i) => {
-            const style = vaccineStyles[v.status] ?? vaccineStyles.NEVER_GIVEN;
+            const style = VACCINE_PILL[v.status] ?? VACCINE_PILL.NEVER_GIVEN;
             return (
               <li key={i} className="flex items-center justify-between gap-3 py-2.5">
                 <div>
@@ -256,9 +255,7 @@ export default async function PassportPage({
                     {v.nextDueOn && ` · due ${v.nextDueOn}`}
                   </p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${style.className}`}>
-                  {style.label}
-                </span>
+                <StatusPill tone={style.tone} icon={style.icon}>{style.label}</StatusPill>
               </li>
             );
           })}

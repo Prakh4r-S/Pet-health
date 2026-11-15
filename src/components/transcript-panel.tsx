@@ -2,6 +2,8 @@ import { requestTranscription } from "@/app/appointments/[id]/recording-actions"
 import { acceptProposedField } from "@/app/appointments/[id]/proposal-actions";
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
+import StatusPill, { type StatusTone } from "@/components/status-pill";
+import type { IconName } from "@/components/icon";
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
 const smallButton =
@@ -47,16 +49,13 @@ const FIELD_LABELS: Record<string, string> = {
 /** The panel's own state, in the same badge style as the record's. */
 const RECORDING_BADGE: Record<
   NonNullable<RecordingData>["status"] | "STALLED",
-  { text: string; className: string }
+  { text: string; tone: StatusTone; icon: IconName }
 > = {
-  UPLOADED: { text: "NOT TRANSCRIBED", className: "bg-mist text-ink border-mist-deep" },
-  TRANSCRIBING: {
-    text: "TRANSCRIBING",
-    className: "bg-amber-50 text-amber-900 border-amber-200",
-  },
-  STALLED: { text: "STALLED", className: "bg-amber-50 text-amber-900 border-amber-200" },
-  TRANSCRIBED: { text: "READY", className: "bg-aqua-100 text-navy-900 border-aqua-400" },
-  FAILED: { text: "FAILED", className: "bg-red-50 text-red-900 border-red-200" },
+  UPLOADED: { text: "NOT TRANSCRIBED", tone: "neutral", icon: "dash" },
+  TRANSCRIBING: { text: "TRANSCRIBING", tone: "warning", icon: "clock" },
+  STALLED: { text: "STALLED", tone: "warning", icon: "alert" },
+  TRANSCRIBED: { text: "READY", tone: "ok", icon: "checkCircle" },
+  FAILED: { text: "FAILED", tone: "danger", icon: "alert" },
 };
 
 function PanelHeader({ recording }: { recording: RecordingData }) {
@@ -77,14 +76,9 @@ function PanelHeader({ recording }: { recording: RecordingData }) {
         ) : null}
       </div>
       {badge && (
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${badge.className}`}
-        >
-          {recording?.status === "TRANSCRIBING" && !recording.stalled && (
-            <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-amber-600" />
-          )}
+        <StatusPill tone={badge.tone} icon={badge.icon} className="text-[11px] tracking-wide">
           {badge.text}
-        </span>
+        </StatusPill>
       )}
     </div>
   );
@@ -105,12 +99,21 @@ function ProposedField({
     <ActionForm action={acceptProposedField} className="rounded-md border border-mist p-3">
       <input type="hidden" name="appointmentId" value={appointmentId} />
       <input type="hidden" name="field" value={name} />
-      <label className="mb-1 block text-xs font-medium text-ink-soft">
+      <label
+        htmlFor={`proposed-field-${name}`}
+        className="mb-1 block text-xs font-medium text-ink-soft"
+      >
         {FIELD_LABELS[name]}
       </label>
       {/* Editable before accepting — the vet should be able to correct a
           proposal rather than accept it and then fix it. */}
-      <textarea name="value" rows={3} className={field} defaultValue={value} />
+      <textarea
+        id={`proposed-field-${name}`}
+        name="value"
+        rows={3}
+        className={field}
+        defaultValue={value}
+      />
       <SubmitButton pendingLabel="Adding..." className={`${smallButton} mt-2`}>
         Add to note
       </SubmitButton>
