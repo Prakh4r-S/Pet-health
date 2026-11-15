@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/current-user";
 import PetAvatar from "@/components/pet-avatar";
 import VetCard from "@/components/vet-card";
+import CareSummary from "@/components/care-summary";
+import { getCareForPets } from "@/lib/care";
 import { getVetRecommendations } from "@/lib/vet-matching";
 
 
@@ -39,6 +41,10 @@ export default async function PetsPage() {
     }),
     getVetRecommendations(user.id, { limit: 3 }),
   ]);
+  const care = await getCareForPets(
+    pets.map((p) => p.id),
+    user.id,
+  );
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -51,6 +57,16 @@ export default async function PetsPage() {
             Add pet
           </Link>
         </div>
+
+      {pets.length > 0 && (
+        <CareSummary
+          pets={care.pets}
+          mode="owner"
+          showPetNames={pets.length > 1}
+          doseLogAvailable={care.doseLogAvailable}
+          className="mb-6"
+        />
+      )}
 
       {pets.length === 0 ? (
         <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-ink-soft">

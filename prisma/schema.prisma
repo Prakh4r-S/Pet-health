@@ -52,8 +52,9 @@ model User {
   vetProfile   VetProfile?
   appointments Appointment[]
 
-  uploadedDocuments Document[]      @relation("UploadedDocuments")
+  uploadedDocuments Document[]       @relation("UploadedDocuments")
   amendments        NoteAmendment[]
+  dosesLogged       MedicationDose[]
 }
 
 // ---------------------------------------------------------------
@@ -541,7 +542,33 @@ model Prescription {
   note ConsultationNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
   pet  Pet              @relation(fields: [petId], references: [id], onDelete: Cascade)
 
+  doses MedicationDose[]
+
   @@index([petId, createdAt])
+}
+
+/// One dose of a prescribed medicine, as the owner reports having given
+/// it.
+///
+/// A log, not a schedule: the prescription's frequency is free text
+/// ("twice daily", "every 8 hours with food"), so nothing here says when
+/// a dose was due — only when one was given. The vet reads it to see
+/// whether the course is actually being followed.
+///
+/// `givenAt` and `createdAt` are separate so that a dose can later be
+/// recorded after the fact without the record claiming it was logged
+/// at the time.
+model MedicationDose {
+  id             String   @id @default(cuid())
+  prescriptionId String
+  loggedById     String
+  givenAt        DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  loggedBy     User         @relation(fields: [loggedById], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId, givenAt])
 }
 
 enum RecordingStatus {

@@ -81,8 +81,11 @@ const urgencyTone: Record<VisitUrgency, string> = {
 export default function IntakeFields({
   pets,
   compact = false,
+  defaultConcern = "",
 }: {
   pets: IntakePet[];
+  /** Starts the concern off, when the owner arrived by picking a symptom. */
+  defaultConcern?: string;
   /** Tighter spacing, for the instant-match panel. */
   compact?: boolean;
 }) {
@@ -147,8 +150,15 @@ export default function IntakeFields({
           maxLength={500}
           required
           className={field}
+          defaultValue={defaultConcern}
           placeholder="e.g. Limping on the back left leg, not putting weight on it"
         />
+        {defaultConcern && (
+          <p className="mt-1 text-xs text-ink-soft">
+            Filled in from what you picked. Add what you&apos;ve noticed — when it
+            started, how often, anything that changed.
+          </p>
+        )}
       </div>
 
       <fieldset>

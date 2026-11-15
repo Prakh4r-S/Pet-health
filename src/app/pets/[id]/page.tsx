@@ -17,6 +17,8 @@ import { consultationRecordSelect, toOwnerRecord } from "@/lib/consultation-reco
 import ActionForm from "@/components/action-form";
 import SubmitButton from "@/components/submit-button";
 import PetAvatar from "@/components/pet-avatar";
+import CareSummary from "@/components/care-summary";
+import { getCareForPets } from "@/lib/care";
 
 
 const field = "w-full rounded-md border border-mist-deep px-3 py-2 text-sm";
@@ -124,6 +126,8 @@ export default async function PetDetailPage({
   const latestWeight = pet.weights.at(-1);
   const today = new Date().toISOString().slice(0, 10);
 
+  const care = await getCareForPets([pet.id], user.id);
+
   const needsAttention = standings.filter(
     (s) => s.isCore && (s.status === "OVERDUE" || s.status === "NEVER_GIVEN"),
   );
@@ -172,6 +176,16 @@ export default async function PetDetailPage({
           {needsAttention.map((s) => s.name).join(", ")}.
         </div>
       )}
+
+      {/* The owner's to-do list; for a treating vet, the same facts
+          read-only with the dose log open. */}
+      <CareSummary
+        pets={care.pets}
+        mode={isVet ? "vet" : "owner"}
+        showPetNames={false}
+        doseLogAvailable={care.doseLogAvailable}
+        className="mb-6"
+      />
 
       {access.canEdit && (
         <PetEditForm

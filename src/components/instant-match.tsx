@@ -12,8 +12,10 @@ export default function InstantMatch({
   pets,
   specialisationSlug,
   availableCount,
+  defaultConcern,
 }: {
   pets: IntakePet[];
+  defaultConcern?: string;
   specialisationSlug?: string;
   availableCount: number;
 }) {
@@ -59,7 +61,7 @@ export default function InstantMatch({
             <input type="hidden" name="specialisationSlug" value={specialisationSlug} />
           )}
           <div className="rounded-md border border-aqua-100 bg-white p-4">
-            <IntakeFields pets={pets} compact />
+            <IntakeFields pets={pets} compact defaultConcern={defaultConcern} />
           </div>
           <div className="flex items-center gap-3">
             <SubmitButton pendingLabel="Booking...">Book the earliest slot</SubmitButton>

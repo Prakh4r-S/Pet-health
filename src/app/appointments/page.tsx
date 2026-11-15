@@ -27,8 +27,13 @@ const pastLabels: Record<string, { text: string; className: string }> = {
   SCHEDULED: { text: "ended", className: "text-ink-soft" },
 };
 
-export default async function AppointmentsPage() {
+export default async function AppointmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rescheduled?: string }>;
+}) {
   const user = await getCurrentUser();
+  const { rescheduled } = await searchParams;
 
   const now = new Date();
   const cutoff = liveEndsAtCutoff(now);
@@ -71,6 +76,16 @@ export default async function AppointmentsPage() {
         </Link>
       </div>
 
+      {rescheduled && (
+        <p
+          role="status"
+          className="mb-4 rounded-md border border-aqua-100 bg-aqua-50 px-4 py-3 text-sm text-navy-900"
+        >
+          Appointment moved. If you added the old time to your calendar, use
+          &ldquo;Add to Calendar&rdquo; again to update it.
+        </p>
+      )}
+
       {current.length === 0 ? (
         <p className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-ink-soft">
           Nothing booked.
@@ -111,6 +126,22 @@ export default async function AppointmentsPage() {
                     <span className="text-xs text-ink-soft">
                       Call opens {JOIN_WINDOW_BEFORE_MINUTES} minutes before
                     </span>
+                  )}
+                  {/* A plain download: the route builds the .ics file. */}
+                  <a
+                    href={`/api/appointments/${a.id}/calendar`}
+                    download
+                    className="text-sm text-navy-700 hover:underline"
+                  >
+                    Add to Calendar
+                  </a>
+                  {!started && (
+                    <Link
+                      href={`/appointments/${a.id}/reschedule`}
+                      className="text-sm text-navy-700 hover:underline"
+                    >
+                      Reschedule
+                    </Link>
                   )}
                   {!started && (
                     <ActionForm

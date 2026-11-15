@@ -5,8 +5,9 @@ import { findVetsAvailableNow } from "@/lib/slots";
 import { getVetRecommendations, RADIUS_OPTIONS, type Radius } from "@/lib/vet-matching";
 import InstantMatch from "@/components/instant-match";
 import VetCard from "@/components/vet-card";
+import { CARE_NEEDS } from "@/lib/care-needs";
 
-type Filters = { specialisation?: string; pet?: string; radius?: string };
+type Filters = { specialisation?: string; pet?: string; radius?: string; need?: string };
 
 const RADIUS_LABEL: Record<Radius, string> = {
   near: "Near me",
@@ -23,6 +24,7 @@ const pillOff = `${pill} bg-mist hover:bg-aqua-100`;
 function hrefWith(current: Filters, change: Filters) {
   const next = { ...current, ...change };
   const params = new URLSearchParams();
+  if (next.need) params.set("need", next.need);
   if (next.pet) params.set("pet", next.pet);
   if (next.radius && next.radius !== "all") params.set("radius", next.radius);
   if (next.specialisation) params.set("specialisation", next.specialisation);
@@ -59,12 +61,13 @@ export default async function VetsPage({
       petId: query.pet,
       radius: requestedRadius,
       specialisationSlug: specialisation,
+      needSlug: query.need,
     }),
     prisma.specialisation.findMany({ orderBy: { name: "asc" } }),
     findVetsAvailableNow(specialisation),
   ]);
 
-  const { vets, pets, selectedPetId, radius, ownerHasLocation, ownerHasCoordinates } =
+  const { vets, pets, selectedPetId, radius, need, ownerHasLocation, ownerHasCoordinates } =
     recommendations;
 
   // What the links below are built from: only filters that took effect,
@@ -73,6 +76,7 @@ export default async function VetsPage({
     specialisation,
     pet: selectedPetId ?? undefined,
     radius,
+    need: need?.slug,
   };
   const selectedPet = pets.find((p) => p.id === selectedPetId);
 
@@ -101,10 +105,50 @@ export default async function VetsPage({
         </div>
       )}
 
+      {/* What is wrong, in the owner's words, before anything about
+          specialisms. A chip is a toggle: picking the selected one
+          again clears it. */}
+      <nav aria-label="What do you need help with?" className="mb-6">
+        <h2 className="mb-2 font-sans text-sm font-medium text-ink">
+          What do you need help with?
+        </h2>
+        <ul className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          {CARE_NEEDS.map((option) => {
+            const on = need?.slug === option.slug;
+            return (
+              <li key={option.slug} className="shrink-0">
+                <Link
+                  href={hrefWith(current, { need: on ? undefined : option.slug })}
+                  aria-current={on ? "true" : undefined}
+                  className={`block whitespace-nowrap rounded-full border px-4 py-2 text-sm ${
+                    on
+                      ? "border-navy-900 bg-navy-900 text-white"
+                      : "border-mist-deep bg-white hover:border-aqua-600 hover:bg-aqua-50"
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {need && (
+          <p className="mt-2 text-xs text-ink-soft">
+            {need.anyVet
+              ? "Any vet can help with this; those who focus on it are listed first."
+              : "Showing vets who focus on this."}{" "}
+            It will be filled in as the reason for your visit when you book.
+          </p>
+        )}
+      </nav>
+
       <InstantMatch
+        // Remounted when the need changes, so its form starts from the new one.
+        key={need?.slug ?? "none"}
         pets={pets}
         specialisationSlug={specialisation}
         availableCount={availableNow.length}
+        defaultConcern={need?.concern}
       />
 
       <div className="mb-8 grid gap-3">
@@ -185,12 +229,13 @@ export default async function VetsPage({
         <div className="rounded-md border border-dashed border-mist-deep p-8 text-center text-sm text-ink-soft">
           <p>
             No vets available
+            {need && !need.anyVet && ` for ${need.label.toLowerCase()}`}
             {specialisation && " in this specialisation"}
             {radius !== "all" && ` ${RADIUS_LABEL[radius].toLowerCase()}`}.
           </p>
-          {(radius !== "all" || specialisation) && (
+          {(radius !== "all" || specialisation || need) && (
             <Link
-              href={hrefWith(current, { radius: "all", specialisation: undefined })}
+              href={hrefWith(current, { radius: "all", specialisation: undefined, need: undefined })}
               className="mt-2 inline-block text-navy-700 underline"
             >
               Show all vets
@@ -201,7 +246,7 @@ export default async function VetsPage({
         <ul className="grid gap-3">
           {vets.map((vet) => (
             <li key={vet.id}>
-              <VetCard vet={vet} />
+              <VetCard vet={vet} needSlug={need?.slug} />
             </li>
           ))}
         </ul>

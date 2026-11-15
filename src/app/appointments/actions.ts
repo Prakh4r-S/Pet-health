@@ -181,3 +181,76 @@ export async function cancelAppointment(
   revalidatePath("/vet/appointments");
   return ok;
 }
+
+/**
+ * Moves an upcoming appointment to another of the same vet's open slots.
+ *
+ * The appointment is updated in place rather than cancelled and booked
+ * again: it keeps its id — so the room link, and any calendar entry made
+ * from it, still point at the right thing — and it keeps the pre-visit
+ * brief, which is the point. Owner only; a vet who cannot make a time
+ * cancels, so that the owner chooses the new one.
+ */
+export async function rescheduleAppointment(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  const startsAtRaw = String(formData.get("startsAt") ?? "");
+
+  const startsAt = new Date(startsAtRaw);
+  if (!startsAtRaw || Number.isNaN(startsAt.valueOf())) return fail("Pick a new time first.");
+
+  const appointment = await prisma.appointment.findFirst({
+    where: { id, ownerId: user.id },
+    select: {
+      id: true,
+      status: true,
+      startsAt: true,
+      vetProfileId: true,
+      vetProfile: { select: { slotMinutes: true } },
+    },
+  });
+  if (!appointment) return fail("Appointment not found.");
+
+  const now = new Date();
+  if (appointment.status !== "SCHEDULED" || appointment.startsAt <= now) {
+    return fail("This appointment has already started or ended and can no longer be moved.");
+  }
+  if (appointment.startsAt.getTime() === startsAt.getTime()) {
+    return fail("That is the time it is already booked for.");
+  }
+
+  // As with booking: the posted time is checked against the slots the
+  // server itself generates, not trusted.
+  const slots = await getAvailableSlots(appointment.vetProfileId);
+  if (!slots.some((s) => s.startsAt.getTime() === startsAt.getTime())) {
+    return fail("That time is no longer available. Please pick another.");
+  }
+
+  const endsAt = new Date(startsAt.getTime() + appointment.vetProfile.slotMinutes * 60_000);
+
+  // The conditions are part of the write, so an appointment cancelled or
+  // started in the meantime is left alone. Two owners after the same slot
+  // are settled by the same unique index that settles two bookings.
+  let moved: number;
+  try {
+    ({ count: moved } = await prisma.appointment.updateMany({
+      where: { id: appointment.id, status: "SCHEDULED", startsAt: { gt: now } },
+      data: { startsAt, endsAt },
+    }));
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return fail("Someone just booked that slot. Please pick another time.");
+    }
+    throw error;
+  }
+  if (moved === 0) {
+    return fail("This appointment has already started or ended and can no longer be moved.");
+  }
+
+  revalidatePath("/appointments");
+  revalidatePath("/vet/appointments");
+  redirect("/appointments?rescheduled=1");
+}

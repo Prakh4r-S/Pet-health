@@ -67,7 +67,7 @@ export default async function ConsultationReviewPage({
 
   if (!appointment) notFound();
 
-  const patient = await getPatientSummary(appointment.pet.id);
+  const patient = await getPatientSummary(appointment.pet.id, user.id);
 
   const recording = appointment.recording;
   const stalled = recording ? isTranscriptionStale(recording) : false;

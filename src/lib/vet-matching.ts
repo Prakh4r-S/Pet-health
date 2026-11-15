@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAvailableSlots } from "@/lib/slots";
 import { distanceKm, formatDistance, toCoordinates } from "@/lib/geo";
+import { findCareNeed, type CareNeed } from "@/lib/care-needs";
 
 /**
  * Ranks vets for one owner: how near the clinic is, how well the vet
@@ -233,12 +234,23 @@ export function findPetFit(pets: MatchPet[], vet: MatchVet) {
   return { species: [...species.values()], topics };
 }
 
+/**
+ * Whether a vet is a particular fit for what the owner came for: they
+ * hold one of the need's specialisations, or say as much in their own
+ * specialties or bio.
+ */
+export function matchesNeed(need: CareNeed, vet: MatchVet) {
+  if (vet.specialisations.some((s) => need.specialisations.includes(s.slug))) return true;
+  const vetText = [...vet.specialties, vet.bio ?? ""].join(" \n ").toLowerCase();
+  return need.terms.some((term) => hasStem(vetText, term));
+}
+
 // ---------------------------------------------------------------
 // Scoring
 // ---------------------------------------------------------------
 
 export type MatchReason = {
-  kind: "proximity" | "pet" | "availability";
+  kind: "need" | "proximity" | "pet" | "availability";
   label: string;
 };
 
@@ -248,6 +260,8 @@ export type VetScore = {
   proximity: Proximity;
   /** "3.1 km away", or null when there is no measured distance. */
   distanceLabel: string | null;
+  /** False only when a need was chosen and this vet is not a fit for it. */
+  matchesNeed: boolean;
 };
 
 /**
@@ -265,6 +279,8 @@ const POINTS = {
   furtherSpecies: 5,
   topic: 15,
   maxPetFit: 45,
+  // What the owner said they came for outranks what was inferred.
+  need: 35,
   accepting: 5,
   slotsWithin24h: 20,
   slotsWithin48h: 12,
@@ -278,11 +294,20 @@ export function scoreVet(input: {
   vet: MatchVet;
   /** The soonest open slot in the next 48 hours, if there is one. */
   nextSlotAt: Date | null;
+  /** What the owner picked from the symptom chips, if anything. */
+  need?: CareNeed | null;
   now?: Date;
 }): VetScore {
-  const { owner, pets, vet, nextSlotAt, now = new Date() } = input;
+  const { owner, pets, vet, nextSlotAt, need = null, now = new Date() } = input;
   const reasons: MatchReason[] = [];
   let score = 0;
+
+  // The stated need, first: it is the reason the owner is here.
+  const fitsNeed = need ? matchesNeed(need, vet) : true;
+  if (need && fitsNeed) {
+    score += POINTS.need;
+    reasons.push({ kind: "need", label: `Good for: ${need.label}` });
+  }
 
   // Proximity
   const proximity = compareLocations(owner, vet);
@@ -344,7 +369,7 @@ export function scoreVet(input: {
     }
   }
 
-  return { score, reasons, proximity, distanceLabel };
+  return { score, reasons, proximity, distanceLabel, matchesNeed: fitsNeed };
 }
 
 /** Best first; the nearer clinic, then the more experienced vet, breaks a tie. */
@@ -400,10 +425,13 @@ export async function getVetRecommendations(
     petId?: string;
     radius?: Radius;
     specialisationSlug?: string;
+    /** A slug from CARE_NEEDS; anything else is ignored. */
+    needSlug?: string;
     limit?: number;
   } = {},
 ) {
-  const { petId, radius = "all", specialisationSlug, limit } = options;
+  const { petId, radius = "all", specialisationSlug, needSlug, limit } = options;
+  const need = findCareNeed(needSlug);
 
   const [owner, ownerPets, vets] = await Promise.all([
     prisma.user.findUniqueOrThrow({
@@ -458,12 +486,15 @@ export async function getVetRecommendations(
         slots.find((s) => s.startsAt.getTime() - now.getTime() <= 48 * HOUR_MS)?.startsAt ??
         null;
 
-      return { ...vet, match: scoreVet({ owner, pets, vet, nextSlotAt, now }) };
+      return { ...vet, match: scoreVet({ owner, pets, vet, nextSlotAt, need, now }) };
     }),
   );
 
   const ranked = scored
     .filter((vet) => withinRadius(vet.match.proximity, appliedRadius))
+    // A need any vet can see to only reorders the list; a specialist
+    // one shortens it to the vets who are a fit.
+    .filter((vet) => !need || need.anyVet || vet.match.matchesNeed)
     .sort(compareMatches);
 
   return {
@@ -473,6 +504,7 @@ export async function getVetRecommendations(
     ownerHasCoordinates: toCoordinates(owner) !== null,
     pets: ownerPets.map((pet) => ({ id: pet.id, name: pet.name, species: pet.species.name })),
     selectedPetId: selectedPet?.id ?? null,
+    need,
     radius: appliedRadius,
   };
 }

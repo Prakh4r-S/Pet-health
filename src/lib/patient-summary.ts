@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getVaccineStandings } from "@/lib/vaccine-status";
+import { getCareForPets, type CareMedication } from "@/lib/care";
 
 /**
  * A plain-object summary of a pet's records, safe to hand to a client
@@ -36,6 +37,10 @@ export type PatientSummary = {
     title: string;
     createdAt: string;
   }[];
+  /** Current medicines with the owner's log of doses given. */
+  medications: CareMedication[];
+  /** False when the dose log could not be read; the medicines still are. */
+  doseLogAvailable: boolean;
 };
 
 function monthsSince(birthDate: Date | null): number | null {
@@ -48,7 +53,14 @@ function monthsSince(birthDate: Date | null): number | null {
   return months < 0 ? null : months;
 }
 
-export async function getPatientSummary(petId: string): Promise<PatientSummary> {
+/**
+ * `viewerId` is the vet reading the summary. It only matters to the dose
+ * log's undo window, which never applies to them.
+ */
+export async function getPatientSummary(
+  petId: string,
+  viewerId: string,
+): Promise<PatientSummary> {
   const pet = await prisma.pet.findUniqueOrThrow({
     where: { id: petId },
     include: {
@@ -62,6 +74,7 @@ export async function getPatientSummary(petId: string): Promise<PatientSummary> 
   });
 
   const standings = await getVaccineStandings(petId);
+  const care = await getCareForPets([petId], viewerId);
   const latest = pet.weights.at(-1);
 
   return {
@@ -101,5 +114,7 @@ export async function getPatientSummary(petId: string): Promise<PatientSummary> 
       title: d.title,
       createdAt: d.createdAt.toISOString().slice(0, 10),
     })),
+    medications: care.pets[0]?.medications ?? [],
+    doseLogAvailable: care.doseLogAvailable,
   };
 }

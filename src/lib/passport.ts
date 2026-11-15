@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getVaccineStandings } from "@/lib/vaccine-status";
+import { isPrescriptionCurrent, prescriptionEnd } from "@/lib/prescriptions";
 
 /** 32 random bytes: unguessable, and short enough to sit in a URL. */
 export function newPassportToken() {
@@ -9,16 +10,6 @@ export function newPassportToken() {
 
 /** Tokens are always this shape; anything else is not worth a query. */
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
-
-/**
- * A prescription with no stated duration is treated as current for this
- * long after it was written. Without a cut-off, a one-off course whose
- * length the vet never recorded would be listed as "current medication"
- * for the rest of the animal's life.
- */
-const OPEN_ENDED_PRESCRIPTION_DAYS = 90;
-
-const DAY_MS = 86_400_000;
 
 function isoDate(d: Date | null) {
   return d ? d.toISOString().slice(0, 10) : null;
@@ -140,11 +131,8 @@ export async function getPassportView(token: string) {
   const now = Date.now();
 
   const prescriptions = pet.prescriptions.flatMap((p) => {
-    const started = p.createdAt.getTime();
-    const until = p.durationDays != null ? new Date(started + p.durationDays * DAY_MS) : null;
-    const current = until
-      ? until.getTime() >= now
-      : now - started <= OPEN_ENDED_PRESCRIPTION_DAYS * DAY_MS;
+    const until = prescriptionEnd(p);
+    const current = isPrescriptionCurrent(p, new Date(now));
 
     return current
       ? [
